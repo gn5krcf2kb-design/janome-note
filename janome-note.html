@@ -1,0 +1,1442 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>蛇の目ノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: 一枚の帳面。上に蛇の目の見出しと「ラベルを撮る」、タブで 記録／日本地図／味マップ。撮ると下からシートが出てAIが読んだ内容を確認して保存 */
+:root{
+  --bg:#f7f8fa; --paper:#ffffff; --ink:#1b2130; --muted:#69708a; --line:#dfe3ec;
+  --ai:#24418f; --ai-soft:#e6ebf7; --ai-mid:#8fa3d6; --shu:#c4402f; --gold:#b98a2a;
+  --f-disp:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-num:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1320; --paper:#171c2c; --ink:#e7eaf3; --muted:#9aa2bd; --line:#2a3148;
+  --ai:#8ea7ea; --ai-soft:#22305a; --ai-mid:#4a5f9e; --shu:#e8705f; --gold:#d8ad55; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1320; --paper:#171c2c; --ink:#e7eaf3; --muted:#9aa2bd; --line:#2a3148;
+  --ai:#8ea7ea; --ai-soft:#22305a; --ai-mid:#4a5f9e; --shu:#e8705f; --gold:#d8ad55; color-scheme:dark}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 110px}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:center;gap:14px}
+.janome{width:46px;height:46px;border-radius:50%;flex:none;
+  background:radial-gradient(circle,var(--paper) 0 30%,var(--ai) 30% 46%,var(--paper) 46% 62%,var(--ai) 62% 78%,var(--paper) 78%);
+  border:1px solid var(--line)}
+h1{font-family:var(--f-disp);font-weight:800;font-size:1.6rem;margin:0;letter-spacing:.06em;line-height:1.2}
+.sub{color:var(--muted);font-size:.8rem;margin:0}
+.stat{margin-left:auto;text-align:right;font-size:.75rem;color:var(--muted)}
+.stat b{display:block;font-family:var(--f-num);font-size:1.3rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.shoot{display:flex;gap:8px}
+.shoot .big{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;font:inherit;font-weight:700;font-size:1.05rem;cursor:pointer;
+  border:0;border-radius:12px;padding:16px;background:var(--ai);color:var(--paper)}
+.shoot .alt{font:inherit;font-weight:700;font-size:.85rem;cursor:pointer;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--paper);color:var(--ink);line-height:1.3}
+.shoot button:focus-visible{outline:3px solid var(--shu);outline-offset:2px}
+.cam{width:22px;height:22px;border:2.5px solid currentColor;border-radius:6px;position:relative;box-sizing:border-box}
+.cam::after{content:"";position:absolute;inset:4px;border:2.5px solid currentColor;border-radius:50%}
+.linkbtn{all:unset;cursor:pointer;align-self:flex-start;font-size:.85rem;font-weight:700;color:var(--ai);text-decoration:underline;text-underline-offset:3px;margin-top:-6px}
+.linkbtn:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.mwrap{position:relative;border-radius:10px;overflow:hidden;background:var(--ai-soft)}
+.mwrap img{display:block;width:100%;height:auto}
+#m-boxes{position:absolute;inset:0}
+.mbox{position:absolute;border:3px solid var(--shu);border-radius:6px;box-sizing:border-box}
+.mbox.off{border-color:rgba(255,255,255,.6);border-style:dashed}
+.mbox b{position:absolute;left:-3px;top:-3px;background:var(--shu);color:#fff;font-size:.8rem;padding:0 6px;border-radius:4px 0 4px 0}
+.mbox.off b{background:rgba(0,0,0,.55)}
+.mlist{display:flex;flex-direction:column;gap:10px}
+.mitem{display:grid;grid-template-columns:auto 72px 1fr;gap:10px;align-items:start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px}
+.mitem.off{opacity:.5}
+.mitem img{width:72px;height:96px;object-fit:cover;border-radius:8px;display:block;background:var(--ai-soft)}
+.mitem .mf{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mitem .mf input,.mitem .mf select{padding:6px 8px;font-size:.88rem}
+.mitem .num{font-weight:700;color:var(--shu);font-size:.9rem;display:flex;flex-direction:column;align-items:center;gap:6px}
+.mitem .num input{width:20px;height:20px;accent-color:var(--ai)}
+.official{display:flex;flex-direction:column;gap:6px;background:var(--ai-soft);border-radius:10px;padding:10px}
+.official textarea{font-size:.88rem;line-height:1.6}
+.bridge{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.bridge summary{font-size:.9rem;font-weight:700;color:var(--ai);cursor:pointer;padding:4px 0}
+.bridge[open]{border-color:var(--ai);border-width:2px}
+.bridge .steps{margin:10px 0 0;padding-left:1.3em;display:flex;flex-direction:column;gap:10px;font-size:.85rem}
+.bridge .steps li{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bridge textarea{font-size:.85rem}
+.people{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.people li{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;font-size:.9rem}
+.people img{width:32px;height:32px;border-radius:50%;display:block}
+.people b{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.people small{display:block;color:var(--muted);font-size:.75rem;overflow-wrap:anywhere}
+.card.ro{cursor:default}
+.who{font-size:.72rem;font-weight:700;color:var(--muted)}
+.no-claude #pick,.no-claude #multi-btn,.no-claude #other-ai-btn,.no-claude #ai-read,.no-claude #split-btn,.no-claude #off-find,
+.no-claude .seg label:has(input[name=layout][value=gen]){display:none!important}
+.bridge .tip{font-size:.78rem;color:var(--muted)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
+.tabs button{all:unset;cursor:pointer;padding:8px 12px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ai);border-color:var(--ai)}
+.tabs button:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools input,.tools select{flex:1 1 140px;min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;box-sizing:border-box}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ai);outline-offset:0;border-color:transparent}
+.filter{display:flex;align-items:center;gap:8px;font-size:.85rem}
+.filter button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:99px;padding:2px 10px;cursor:pointer}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{all:unset;cursor:pointer;display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 10px}
+.card:focus-visible{outline:2px solid var(--ai)}
+.thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--ai-soft);display:block}
+.thumb.none{background:radial-gradient(circle,var(--ai-soft) 0 34%,var(--ai-mid) 34% 44%,var(--ai-soft) 44% 62%,var(--ai-mid) 62% 72%,var(--ai-soft) 72%)}
+.card .txt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.card .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card .nm{font-family:var(--f-disp);font-weight:800;font-size:1.08rem;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.card .meta{color:var(--muted);font-size:.8rem;display:flex;flex-wrap:wrap;gap:2px 10px}
+.likes{font-size:.8rem;color:var(--shu);font-weight:700}
+.stars{color:var(--gold);letter-spacing:1px;white-space:nowrap;font-size:.85rem}
+.chip{display:inline-block;font-size:.72rem;font-weight:700;padding:0 8px;border-radius:99px;background:var(--ai-soft);color:var(--ai)}
+.empty{background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:28px 20px;text-align:center;color:var(--muted)}
+.empty strong{display:block;font-family:var(--f-disp);color:var(--ink);font-size:1.1rem;margin-bottom:6px}
+.note{font-size:.75rem;color:var(--muted);margin:0}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.box svg{display:block;width:100%;height:auto}
+.box h3{margin:0;font-family:var(--f-disp);font-size:1.05rem}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.75rem;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.rank{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.rank li{display:grid;grid-template-columns:4.5em 1fr 2.5em;gap:8px;align-items:center;font-size:.85rem}
+.rank .bar{height:8px;border-radius:4px;background:var(--ai)}
+.rank b{font-family:var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.trend{font-family:var(--f-disp);font-size:1.15rem;font-weight:800;margin:0}
+.sheet{position:fixed;inset:0;background:rgba(10,14,25,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.panel{background:var(--bg);width:100%;max-width:640px;max-height:94%;overflow:auto;border-radius:16px 16px 0 0;box-sizing:border-box;
+  padding:18px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.panel h2{font-family:var(--f-disp);margin:0 0 12px;font-size:1.25rem}
+.tw{position:relative;display:block;width:56px;height:56px}
+.cnt{position:absolute;right:-4px;bottom:-4px;background:var(--ink);color:var(--bg);font-size:.68rem;font-weight:700;border-radius:99px;padding:0 6px;line-height:1.6}
+.photobox{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.shots{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.shot{position:relative;flex:none;width:88px}
+.shot img{width:88px;height:88px;object-fit:cover;border-radius:10px;display:block;border:2px solid transparent}
+.shot.main img{border-color:var(--ai)}
+.shot .badge{position:absolute;left:4px;top:4px;background:var(--ai);color:var(--paper);font-size:.66rem;font-weight:700;border-radius:4px;padding:0 5px}
+.shot .x{position:absolute;right:3px;top:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:.9rem;line-height:24px;padding:0;cursor:pointer}
+.shot .mk{display:block;width:100%;margin-top:4px;font:inherit;font-size:.7rem;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:2px 0;cursor:pointer}
+.ai-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ai-row .btn{padding:6px 12px;font-size:.85rem}
+.ai-status{font-size:.85rem;color:var(--muted)}
+.ai-status.ok{color:var(--ai);font-weight:700}
+.ai-status.err{color:var(--shu)}
+.dots::after{content:"";animation:dots 1.2s steps(4) infinite}
+@keyframes dots{0%{content:""}25%{content:"・"}50%{content:"・・"}75%{content:"・・・"}}
+form{display:flex;flex-direction:column;gap:12px}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+legend.h{font-size:.8rem;font-weight:700;color:var(--ai);padding:0;margin-bottom:2px;letter-spacing:.05em}
+label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:700;color:var(--muted)}
+.lbl{font-size:.8rem;font-weight:700;color:var(--muted)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row>*{min-width:0}
+.slide{display:grid;grid-template-columns:3.2em 1fr 3.2em;align-items:center;gap:8px;font-size:.8rem;color:var(--muted)}
+.slide span:last-child{text-align:right}
+input[type=range]{padding:0;border:0;background:none;accent-color:var(--ai)}
+.rate{display:flex;gap:6px}
+.rate button{all:unset;cursor:pointer;font-size:2rem;color:var(--line);line-height:1}
+.rate button.on{color:var(--gold)}
+.rate button:focus-visible{outline:2px solid var(--ai)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{flex-direction:row;align-items:center;font-weight:500;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:99px;padding:4px 12px;cursor:pointer;position:relative}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label:has(input:checked){background:var(--ai);color:var(--paper);border-color:var(--ai)}
+.seg label:has(input:focus-visible){outline:2px solid var(--ai);outline-offset:2px}
+details summary{cursor:pointer;font-size:.85rem;color:var(--muted);font-weight:700}
+details[open] summary{margin-bottom:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.btn{font:inherit;font-weight:700;border-radius:8px;padding:11px 16px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.btn.primary{background:var(--ai);border-color:var(--ai);color:var(--paper);flex:1}
+.btn.danger{color:var(--shu);border-color:var(--shu)}
+.btn:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:default}
+.canvas-wrap{display:flex;justify-content:center;background:var(--ai-soft);border-radius:10px;padding:12px}
+.canvas-wrap img{display:block;max-width:100%;max-height:52vh;width:auto;height:auto;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+#share{z-index:25}
+.sumbtn{align-self:flex-start}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(30px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:.85rem;z-index:30}
+@media (prefers-reduced-motion:no-preference){.panel{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
+@media (prefers-reduced-motion:reduce){.dots::after{animation:none;content:"…"}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="janome" aria-hidden="true"></div>
+    <div>
+      <h1>蛇の目ノート</h1>
+      <p class="sub">撮って残す、日本酒の記録</p>
+    </div>
+    <div class="stat"><b id="count">0</b>本</div>
+  </header>
+
+  <div class="shoot">
+    <button class="big" id="shoot"><span class="cam" aria-hidden="true"></span>ラベルを撮る</button>
+    <button class="alt" id="pick">写真<br>から</button>
+    <button class="alt" id="manual">手で<br>入力</button>
+  </div>
+  <button type="button" class="linkbtn" id="other-ai-btn">ChatGPTやGeminiなど、ほかのAIで読み取って記録する</button>
+  <button type="button" class="linkbtn" id="multi-btn">何本も写っている写真から、まとめて登録（撮影・写真どちらも可）</button>
+  <input type="file" id="file-multi" accept="image/*" hidden>
+  <input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
+  <input type="file" id="file-pick" accept="image/*" multiple hidden>
+
+  <div class="tabs" role="tablist">
+    <button id="tab-list" role="tab" aria-selected="true">記録</button>
+    <button id="tab-japan" role="tab" aria-selected="false">日本地図</button>
+    <button id="tab-taste" role="tab" aria-selected="false">味マップ</button>
+    <button id="tab-all" role="tab" aria-selected="false" hidden>みんな</button>
+  </div>
+
+  <section id="view-list" class="wrap" style="gap:12px;width:100%">
+    <div class="tools">
+      <input id="q" type="search" placeholder="銘柄・蔵・料理・好きなところで検索">
+      <select id="sort"><option value="date">新しい順</option><option value="rate">評価が高い順</option></select>
+    </div>
+    <div class="filter" id="filter" hidden><span id="filter-txt"></span><button id="filter-clear">解除</button></div>
+    <div id="list" class="list"></div>
+  </section>
+
+  <section id="view-japan" class="wrap" hidden style="width:100%">
+    <div class="box">
+      <h3>どこの蔵を飲んできたか</h3>
+      <svg id="japan" viewBox="0 0 396 384" role="img" aria-label="都道府県ごとの本数"></svg>
+      <div class="legend"><span><i style="background:var(--line)"></i>0本</span><span><i style="background:var(--ai-mid)"></i>1本</span><span><i style="background:var(--ai)"></i>2本以上</span></div>
+      <p class="note">県をタップすると、その県の記録だけを表示します。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sumbtn" id="sum-share">まとめ画像を作る（投稿用）</button>
+      <button type="button" class="btn sumbtn" id="promo-share">アプリ紹介の画像を作る</button></div>
+    </div>
+    <div class="box"><h3>多い県</h3><ol class="rank" id="rank"></ol></div>
+  </section>
+
+  <section id="view-all" class="wrap" hidden style="width:100%">
+    <div class="box">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>みんなの記録</h3><button type="button" class="btn" id="all-reload" style="padding:6px 12px">読み込み直す</button></div>
+      <p class="trend" id="all-sum">—</p>
+      <p class="note" id="all-status">共有した人が記録すると、ここにまとまります。</p>
+    </div>
+    <div class="box"><h3>ファイルで届いた記録を取り込む</h3>
+      <p class="note" style="font-size:.85rem;line-height:1.7">ログインなし版を使っている友達に「記録を書き出す」でファイルを作ってもらい、LINEなどで送ってもらいます。届いたファイルをここで選ぶと、みんなの記録に入ります。同じ人のファイルは、何度取り込んでも新しい内容で上書きされます。</p>
+      <div class="ai-row"><button type="button" class="btn primary" id="imp-btn">ファイルを選んで取り込む</button><span class="ai-status" id="imp-status"></span></div>
+      <input type="file" id="imp-file" accept=".json,application/json" hidden>
+    </div>
+    <div class="box"><h3>人ごと</h3><ul class="people" id="all-people"></ul></div>
+    <div class="box"><h3>よく飲まれている銘柄</h3><ol class="rank" id="all-brands"></ol></div>
+    <div class="box"><h3>県ごとの本数（全員）</h3><svg id="all-japan" viewBox="0 0 396 384" role="img" aria-label="全員の都道府県ごとの本数"></svg><ol class="rank" id="all-prefs"></ol></div>
+    <div class="box"><h3>最近の記録</h3><div class="tools"><select id="all-who"><option value="">全員</option></select></div><div class="list" id="all-list"></div></div>
+  </section>
+
+  <section id="view-taste" class="wrap" hidden style="width:100%">
+    <div class="box">
+      <h3>あなたの好みの傾向</h3>
+      <p class="trend" id="trend">—</p>
+      <svg id="taste" viewBox="0 0 320 320" role="img" aria-label="甘辛と淡麗濃醇の味マップ"></svg>
+      <p class="note">点の大きさは評価の高さ。点をタップすると記録を開きます。赤い印は全体の平均です。</p>
+    </div>
+  </section>
+
+  <p id="mode" class="note"></p>
+  <label style="max-width:260px">ニックネーム（記録を送るときに相手に表示されます）<input id="bk-name" placeholder="例：さけ太郎" maxlength="20"></label>
+  <p class="note">「記録を書き出す」でできたファイルをLINEなどで送ると、送り先の「みんなの記録」に入ります。</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" class="btn" id="bk-out" style="padding:6px 12px;font-size:.85rem">記録を書き出す（バックアップ）</button>
+    <button type="button" class="btn" id="bk-in" style="padding:6px 12px;font-size:.85rem">書き出した記録を読み込む</button>
+    <input type="file" id="bk-file" accept="application/json,.json" hidden>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="ftitle">
+    <h2 id="ftitle">新しい記録</h2>
+    <div class="photobox">
+      <div class="shots" id="shots" hidden></div>
+      <div class="ai-row"><span class="ai-status" id="ai-status"></span>
+        <button type="button" class="btn" id="ai-stop" hidden>止める</button>
+        <button type="button" class="btn" id="ai-read" hidden>写真から読み取る</button></div>
+      <button type="button" class="btn primary" id="split-btn" hidden style="flex:none"></button>
+      <button type="button" class="btn" id="add-photos">＋ 写真を追加（裏ラベル・料理など・複数可）</button>
+      <input type="file" id="file-more" accept="image/*" multiple hidden>
+      <details class="bridge" id="bridge">
+        <summary>ChatGPTやGeminiなど、ほかのAIで読み取る</summary>
+        <ol class="steps">
+          <li><button type="button" class="btn" id="br-copy">質問文をコピー</button></li>
+          <li>ほかのAIのアプリを開き、質問文を貼り付けてラベルの写真と一緒に送る</li>
+          <li>返ってきた答えを全部コピーして、下に貼り付ける
+            <textarea id="br-paste" rows="4" placeholder="ここにAIの答えを貼り付け"></textarea>
+            <button type="button" class="btn primary" id="br-apply">反映する</button>
+            <span class="ai-status" id="br-status"></span></li>
+        </ol>
+        <p class="tip">記録に写真も残したいときは、上の「＋ 写真を追加」で同じ写真を選んでください。</p>
+        <textarea id="br-prompt" rows="3" readonly hidden aria-label="質問文"></textarea>
+      </details>
+    </div>
+    <form id="f">
+      <fieldset>
+        <legend class="h">お酒</legend>
+        <label>銘柄<input id="f-name" required placeholder="例：而今 純米吟醸" list="dl-name" autocomplete="off"></label>
+        <div class="row">
+          <label>酒蔵<input id="f-brewery" placeholder="木屋正酒造" list="dl-brewery" autocomplete="off"></label>
+          <label>都道府県<select id="f-pref"></select></label>
+        </div>
+        <p class="ai-status" id="lookup-status" hidden></p>
+        <datalist id="dl-name"></datalist><datalist id="dl-brewery"></datalist>
+        <label>特定名称
+          <select id="f-type"><option></option><option>純米大吟醸</option><option>大吟醸</option><option>純米吟醸</option><option>吟醸</option>
+            <option>特別純米</option><option>純米</option><option>特別本醸造</option><option>本醸造</option><option>普通酒</option><option>スパークリング</option><option>クラフトサケ</option></select>
+        </label>
+      </fieldset>
+      <fieldset>
+        <legend class="h">飲んでみて</legend>
+        <span class="lbl">評価</span>
+        <div class="rate" id="f-rate"></div>
+        <span class="lbl">好きなところ（いくつでも）</span>
+        <div class="seg" id="f-likes">
+          <label><input type="checkbox" value="味">味</label><label><input type="checkbox" value="旨み">旨み</label><label><input type="checkbox" value="香り">香り</label><label><input type="checkbox" value="熟成感">熟成感</label>
+          <label><input type="checkbox" value="料理合わせ">料理合わせ</label><label><input type="checkbox" value="余韻">余韻</label>
+          <label><input type="checkbox" value="飲みやすさ">飲みやすさ</label><label><input type="checkbox" value="燗映え">燗映え</label>
+          <label><input type="checkbox" value="ラベル">ラベル</label><label><input type="checkbox" value="コスパ">コスパ</label>
+        </div>
+        <span class="lbl">味わい <span id="taste-hint" class="note" style="font-weight:400"></span></span>
+        <div class="slide"><span>甘口</span><input id="f-dry" type="range" min="-2" max="2" step="1" value="0" aria-label="甘辛"><span>辛口</span></div>
+        <div class="slide"><span>淡麗</span><input id="f-body" type="range" min="-2" max="2" step="1" value="0" aria-label="淡麗濃醇"><span>濃醇</span></div>
+        <label>ひとことメモ<input id="f-memo" placeholder="また飲みたい、燗が良かった など"></label>
+        <div class="official">
+          <label>商品紹介・テイスティング<textarea id="f-official" rows="3" placeholder="裏ラベルの紹介文などを、写真から自動で入れます"></textarea></label>
+          <div class="ai-row"><span class="ai-status" id="off-status"></span>
+            <button type="button" class="btn" id="off-find">紹介文を調べる</button></div>
+        </div>
+      </fieldset>
+      <details>
+        <summary>もっと書く（温度・香り・料理・精米歩合）</summary>
+        <fieldset>
+          <span class="lbl">温度帯</span>
+          <div class="seg">
+            <label><input type="radio" name="temp" value="雪冷え">雪冷え</label><label><input type="radio" name="temp" value="冷や">冷や</label>
+            <label><input type="radio" name="temp" value="常温">常温</label><label><input type="radio" name="temp" value="ぬる燗">ぬる燗</label>
+            <label><input type="radio" name="temp" value="熱燗">熱燗</label>
+          </div>
+          <span class="lbl">香り</span>
+          <div class="seg" id="f-aroma">
+            <label><input type="checkbox" value="華やか">華やか</label><label><input type="checkbox" value="フルーティ">フルーティ</label>
+            <label><input type="checkbox" value="米の旨み">米の旨み</label><label><input type="checkbox" value="熟成">熟成</label>
+            <label><input type="checkbox" value="ガス感">ガス感</label><label><input type="checkbox" value="酸">酸</label>
+          </div>
+          <label>合わせた料理<input id="f-food" placeholder="刺身、焼き鳥（塩）"></label>
+          <div class="row">
+            <label>精米歩合（%）<input id="f-polish" type="number" inputmode="numeric" min="1" max="100" placeholder="50"></label>
+            <label>日本酒度<input id="f-smv" type="number" inputmode="decimal" step="0.5" placeholder="+3"></label>
+          </div>
+          <label>飲んだ日<input id="f-date" type="date"></label>
+        </fieldset>
+      </details>
+      <div class="actions">
+        <button type="button" class="btn" id="cancel">閉じる</button>
+        <button type="button" class="btn danger" id="del" hidden>削除</button>
+        <button type="button" class="btn" id="to-share" hidden>投稿用画像</button>
+        <button type="submit" class="btn primary" id="save">保存する</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="sheet" id="share" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="stitle">
+    <h2 id="stitle">投稿用の画像</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="seg" id="s-promo" hidden>
+        <label><input type="radio" name="promo" value="all" checked>みんなで記録する機能を入れる</label>
+        <label><input type="radio" name="promo" value="solo">入れない</label>
+      </div>
+      <div class="seg" id="s-fmt">
+        <label><input type="radio" name="fmt" value="post" checked>投稿（4:5）</label>
+        <label><input type="radio" name="fmt" value="story">ストーリーズ・リール（9:16）</label>
+      </div>
+      <div id="s-opts" style="display:flex;flex-direction:column;gap:10px">
+        <p class="note" id="s-low" hidden style="color:var(--shu);font-weight:700">この記録の写真は小さめなので粗く見えます。「高画質の写真を選ぶ」で元の写真を選ぶときれいになります。</p>
+        <button type="button" class="btn" id="s-hi">高画質の写真を選ぶ</button>
+        <input type="file" id="s-file" accept="image/*" hidden>
+        <div class="seg"><label><input type="checkbox" id="s-auto" checked>ラベルが見やすくなるよう自動補正</label></div>
+        <span class="lbl">デザイン</span>
+        <div class="seg">
+          <label><input type="radio" name="layout" value="overlay" checked>写真に文字を重ねる</label>
+          <label><input type="radio" name="layout" value="gen">生成した背景</label>
+          <label><input type="radio" name="layout" value="card">白い台紙</label>
+        </div>
+        <div id="s-gen" hidden style="display:flex;flex-direction:column;gap:6px">
+          <p class="note">ラベルの色と、酒蔵のある土地の風景をもとに、背景のイラストをClaudeが描きます。写真はその上に額のように置きます。</p>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn" id="s-gen-btn">背景を生成する</button><span class="ai-status" id="s-gen-status"></span></div>
+        </div>
+        <span class="lbl">画像に入れる項目</span>
+        <div class="seg" id="s-items">
+          <label><input type="checkbox" value="brewery" checked>酒蔵・県</label><label><input type="checkbox" value="type" checked>特定名称</label>
+          <label><input type="checkbox" value="rate" checked>評価</label><label><input type="checkbox" value="likes" checked>好きなところ</label>
+          <label><input type="checkbox" value="taste" checked>味マップ</label><label><input type="checkbox" value="food">料理</label>
+          <label><input type="checkbox" value="memo" checked>メモ</label>
+        </div>
+      </div>
+      <div class="canvas-wrap"><img id="s-img" alt="共有用の画像"></div>
+      <button type="button" class="btn primary" id="s-save">画像を保存</button>
+      <p class="note" id="s-hint">保存した画像をSNSで選んで投稿できます。</p>
+      <label>キャプション（ハッシュタグ付き）<textarea id="s-cap" rows="6"></textarea></label>
+      <div class="actions"><button type="button" class="btn" id="s-copy">キャプションをコピー</button><button type="button" class="btn" id="s-close">閉じる</button></div>
+    </div>
+  </div>
+</div>
+<div class="sheet" id="multi" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+    <h2 id="mtitle">まとめて登録</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="mwrap"><img id="m-img" alt="まとめて登録する写真"><div id="m-boxes"></div></div>
+      <div class="ai-row"><span class="ai-status" id="m-status"></span><button type="button" class="btn" id="m-stop" hidden>止める</button><button type="button" class="btn" id="m-retry" hidden>もう一度探す</button></div>
+      <div class="mlist" id="m-list"></div>
+      <div class="seg"><label><input type="checkbox" id="m-keep" checked>元の写真も各記録に追加写真として付ける</label></div>
+      <p class="note">★や好きなところは、記録したあとに一覧から開いて付けられます。</p>
+      <div class="actions"><button type="button" class="btn" id="m-close">閉じる</button><button type="button" class="btn primary" id="m-save" disabled>記録する</button></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const MODE='solo'; const STANDALONE=true; // 'solo' = your own notebook, 'group' = the one you hand to friends
+const $=id=>document.getElementById(id);
+const PREFS=[["北海道",11,0],["青森",11,1],["秋田",10,2],["岩手",11,2],["山形",10,3],["宮城",11,3],
+["石川",7,4],["富山",8,4],["新潟",9,4],["福島",10,4],
+["島根",2,5],["鳥取",3,5],["兵庫",4,5],["京都",5,5],["福井",6,5],["岐阜",7,5],["長野",8,5],["群馬",9,5],["栃木",10,5],["茨城",11,5],
+["山口",1,6],["広島",2,6],["岡山",3,6],["大阪",4,6],["奈良",5,6],["滋賀",6,6],["愛知",7,6],["山梨",8,6],["埼玉",9,6],["東京",10,6],["千葉",11,6],
+["佐賀",0,7],["福岡",1,7],["大分",2,7],["和歌山",5,7],["三重",6,7],["静岡",8,7],["神奈川",9,7],
+["長崎",0,8],["熊本",1,8],["愛媛",3,8],["香川",4,8],
+["鹿児島",0,9],["宮崎",1,9],["高知",3,9],["徳島",4,9],["沖縄",0,11]];
+const PNAMES=PREFS.map(p=>p[0]);
+const normPref=s=>{s=String(s||'').trim();if(!s)return'';if(s.startsWith('北海道'))return'北海道';s=s.replace(/[都府県]$/,'');return PNAMES.includes(s)?s:''};
+$('f-pref').innerHTML='<option value="">—</option>'+PNAMES.map(p=>`<option>${p}</option>`).join('');
+
+let dbRef=null, userRef=null, myId=null, memberOk=false, allLoaded=false, allData=[], splitFile=null, shots=[], aiFile=null, sampleMax=1, aiFocus=null, dlFn=null, assetsFn=null, pendingFile=null, shareHi=null, lastPhotoW=0, notes=[], editing=null, rating=0, delArmed=false, prefFilter='', photoThumb='', aiCtl=null, sampleFn=null;
+const LS='janome-notes';
+
+/* ---- storage: db (private per viewer) with local fallback ---- */
+const store={mode:'local',col:null,
+  async init(){
+    const c=window.claude;
+    try{ if(c&&c.use){
+      const [db,user,sample,dl,as]=await Promise.all([c.use('db'),c.use('user'),c.use('sample'),c.use('downloads'),c.use('assets')]);
+      dlFn=dl||null; assetsFn=as||null;
+      if(sample){try{const lim=await sample.limits();if(lim&&lim.images){sampleFn=sample;sampleMax=Math.max(1,lim.images.maxCount||1)}}catch(e){}}
+      const uid=user?await user.id():null;
+      let canWrite=true; try{if(user&&user.can&&(await user.can('data.write'))===false)canWrite=false}catch(e){}
+      if(db&&uid&&canWrite){
+        this.col=db.collection('data/users/'+uid); this.mode='db';
+        this.unsub=this.col.onSnapshot(s=>{notes=s.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
+        dbRef=db;userRef=user;myId=uid;
+        const owner=await user.isOwner();
+        if(MODE==='solo'){$('mode').textContent='記録はあなたのアカウントに保存され、他の人には見えません。';return}
+        $('mode').textContent=owner?'記録はあなたのアカウントに保存されます。'
+          :'記録はあなたのアカウントに保存されます。ほかの参加者には見えませんが、このノートの作成者は全員分の記録をまとめて見ることができます。';
+        if(owner&&location.hash==='#minna'){$('tab-all').hidden=false;tab('all');if(!allLoaded)loadAll()}
+        registerMember();
+        return;
+      }
+    }}catch(e){}
+    this.toLocal();
+  },
+  toLocal(){
+    this.mode='local'; if(this.unsub){try{this.unsub()}catch(e){}this.unsub=null}
+    try{notes=JSON.parse(localStorage.getItem(LS)||'[]')}catch(e){notes=[]}
+    $('mode').textContent='この端末のブラウザに保存しています（ほかの端末からは見えません）。';
+    render();
+  },
+  async save(n){
+    if(this.mode==='db'){
+      await fitDoc(n);
+      try{const {id,...body}=n; await this.col.doc(id).set(body); if(!memberOk)registerMember(); return}
+      catch(e){if(!(e&&e.code==='invalid_argument'))throw e;
+        if(JSON.stringify(n).length>200000)throw{code:'too_big'}; this.toLocal()}
+    }
+    const i=notes.findIndex(x=>x.id===n.id); i>=0?notes[i]=n:notes.push(n); this.persist();
+  },
+  async remove(id){
+    if(this.mode==='db'){await this.col.doc(id).delete();return}
+    notes=notes.filter(x=>x.id!==id); this.persist();
+  },
+  persist(){try{localStorage.setItem(LS,JSON.stringify(notes))}catch(e){toast('端末の保存容量がいっぱいです。「記録を書き出す」で保存してから、古い記録の写真を減らしてください')} render()}
+};
+
+/* ---- render ---- */
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const stars=n=>'★'.repeat(n||0)+'☆'.repeat(5-(n||0));
+const cssv=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+function render(){
+  $('count').textContent=notes.length;
+  const q=$('q').value.trim();
+  let arr=notes.filter(n=>(!q||[n.name,n.brewery,n.pref,n.food,n.memo,n.type,(n.likes||[]).join(' ')].join(' ').includes(q))&&(!prefFilter||n.pref===prefFilter));
+  arr.sort($('sort').value==='rate'?(a,b)=>(b.rate||0)-(a.rate||0):(a,b)=>(b.date||'').localeCompare(a.date||'')||(b.created||'').localeCompare(a.created||''));
+  $('filter').hidden=!prefFilter; $('filter-txt').textContent=prefFilter+'の記録';
+  const L=$('list');
+  if(!notes.length)L.innerHTML='<div class="empty"><strong>まだ記録がありません</strong>「ラベルを撮る」でお酒の表ラベルを撮ると、銘柄・酒蔵・県を読み取って記録の下書きを作ります。</div>';
+  else if(!arr.length)L.innerHTML='<div class="empty">条件に合う記録はありません。</div>';
+  else L.innerHTML=arr.map(n=>`<button class="card" data-id="${esc(n.id)}">
+    <span class="tw">${n.photo?`<img class="thumb" src="${esc(n.icon||n.photo)}" alt=""${!n.icon&&n.label?` style="object-position:${((n.label.x+n.label.w/2)*100).toFixed(0)}% ${((n.label.y+n.label.h/2)*100).toFixed(0)}%"`:''}>`:'<span class="thumb none" aria-hidden="true"></span>'}${(n.extras||[]).length?`<span class="cnt">+${n.extras.length}</span>`:''}</span>
+    <span class="txt"><span class="top"><span class="nm">${esc(n.name)}</span><span class="stars" aria-label="評価${n.rate||0}">${stars(n.rate)}</span></span>
+    <span class="meta">${n.type?`<span class="chip">${esc(n.type)}</span>`:''}${n.brewery||n.pref?`<span>${esc(n.brewery)}${n.pref?'（'+esc(n.pref)+'）':''}</span>`:''}${n.date?`<span>${esc(n.date.replaceAll('-','.'))}</span>`:''}</span>${n.likes&&n.likes.length?`<span class="likes">好き：${esc(n.likes.join('・'))}</span>`:''}</span></button>`).join('');
+  drawJapan(); drawTaste();
+}
+function drawJapan(){
+  const cnt={}; notes.forEach(n=>{if(n.pref)cnt[n.pref]=(cnt[n.pref]||0)+1});
+  const T=30,G=33; let s='';
+  PREFS.forEach(([p,x,y])=>{const c=cnt[p]||0,X=x*G+1.5,Y=y*G+1.5;
+    const fill=c>=2?cssv('--ai'):c===1?cssv('--ai-mid'):cssv('--line'), fg=c>=2?cssv('--paper'):cssv('--ink');
+    const lab=p.length>2?p.slice(0,2):p;
+    s+=`<g data-pref="${p}" style="cursor:pointer"><title>${p} ${c}本</title><rect x="${X}" y="${Y}" width="${T}" height="${T}" rx="4" fill="${fill}" ${prefFilter===p?`stroke="${cssv('--shu')}" stroke-width="2.5"`:''}/>
+    <text x="${X+T/2}" y="${Y+12}" text-anchor="middle" font-size="9.5" fill="${fg}" font-family="${cssv('--f-body')}">${lab}</text>
+    ${c?`<text x="${X+T/2}" y="${Y+25}" text-anchor="middle" font-size="11" font-weight="700" fill="${fg}" font-family="${cssv('--f-num')}">${c}</text>`:''}</g>`});
+  $('japan').innerHTML=s;
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5), max=top[0]?.[1]||1;
+  $('rank').innerHTML=top.length?top.map(([p,c])=>`<li><span>${p}</span><span class="bar" style="width:${c/max*100}%"></span><b>${c}本</b></li>`).join('')
+    :'<li style="display:block;color:var(--muted)">都道府県が入った記録がまだありません。</li>';
+}
+function drawTaste(){
+  const v=cssv,P=40,S=240,pos=x=>P+(x+2)/4*S;
+  let s=`<rect x="${P}" y="${P}" width="${S}" height="${S}" fill="${v('--paper')}" stroke="${v('--line')}"/>`;
+  [-1,0,1].forEach(t=>{const d=t?'stroke-dasharray="3 4"':'';s+=`<line x1="${pos(t)}" y1="${P}" x2="${pos(t)}" y2="${P+S}" stroke="${v('--line')}" ${d}/><line x1="${P}" y1="${pos(t)}" x2="${P+S}" y2="${pos(t)}" stroke="${v('--line')}" ${d}/>`});
+  const tx=(x,y,t,a='middle')=>`<text x="${x}" y="${y}" text-anchor="${a}" font-size="12" font-weight="700" fill="${v('--muted')}" font-family="${v('--f-body')}">${t}</text>`;
+  s+=tx(P,P+S+20,'甘口','start')+tx(P+S,P+S+20,'辛口','end')+tx(160,P-14,'淡麗')+tx(160,P+S+34,'濃醇');
+  const cnt={};
+  notes.forEach(n=>{const k=(n.dry??0)+','+(n.body??0);const i=cnt[k]=(cnt[k]||0)+1;
+    const ang=i*2.1,r=i>1?12+i*1.5:0,x=pos(n.dry??0)+Math.cos(ang)*r,y=pos(n.body??0)+Math.sin(ang)*r,rad=6+(n.rate||2)*1.4;
+    s+=`<g data-id="${esc(n.id)}" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="${rad}" fill="${v('--ai')}" fill-opacity=".7" stroke="${v('--paper')}" stroke-width="1.5"/><title>${esc(n.name)}</title></g>`});
+  if(notes.length){
+    const ad=notes.reduce((a,n)=>a+(n.dry??0),0)/notes.length, ab=notes.reduce((a,n)=>a+(n.body??0),0)/notes.length;
+    s+=`<g pointer-events="none"><line x1="${pos(ad)-9}" y1="${pos(ab)}" x2="${pos(ad)+9}" y2="${pos(ab)}" stroke="${v('--shu')}" stroke-width="3"/><line x1="${pos(ad)}" y1="${pos(ab)-9}" x2="${pos(ad)}" y2="${pos(ab)+9}" stroke="${v('--shu')}" stroke-width="3"/></g>`;
+    $('trend').textContent=trendText();
+  } else $('trend').textContent='記録が増えると、ここに好みの傾向が出ます';
+  $('taste').innerHTML=s;
+}
+
+/* ---- photos (several per record) + label reading ---- */
+function thumbFrom(file,m=420){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{const sc=Math.min(1,m/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
+    c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.74))};img.onerror=()=>{URL.revokeObjectURL(url);rej()};img.src=url})}
+const PROMPT=`添付の画像は、同じ日本酒1本についての写真です（表ラベル・裏ラベル・瓶・お店のメニューなどが含まれることがあります。1枚目がメインの写真です）。ラベルは瓶の上部とは限らず、瓶の下の方・首の部分・縦長の帯などにあるデザインもあるので、瓶全体を上から下までよく見てください。すべての画像を見て、読み取れる情報を次のJSONだけで返してください。裏ラベルに精米歩合や日本酒度があれば使ってください。
+{"name":"銘柄名（ブランド名＋特定名称や酒米など、ラベルに書かれた商品名）。銘柄を特定できないときも、ラベルに大きく書かれた文字やロゴの漢字（一文字だけのロゴなど）をそのまま入れる","label_text":"ラベルに見える文字をそのまま（読める範囲で）","description":"ラベル（特に裏ラベル）に印刷されている商品紹介やテイスティングコメントの文章を、書かれているとおりに（400字以内。なければ空文字）","brewery":"酒造・蔵元の名前","pref":"蔵の所在都道府県（「新潟」のように都府県を付けない。北海道はそのまま）","type":"純米大吟醸/大吟醸/純米吟醸/吟醸/特別純米/純米/特別本醸造/本醸造/普通酒/スパークリング/クラフトサケ のどれか（瓶内二次発酵や炭酸ガス入りなど、発泡性の日本酒としてラベルに表示があればスパークリング）（クラフトサケは、日本酒の製法をもとに果物やハーブなどの副原料を加えて造られ、ラベルに『クラフトサケ』や『その他の醸造酒』と表示のあるもの）、不明なら空文字","polish":精米歩合の数値または null,"smv":日本酒度の数値または null,"dry":-2から2の整数（甘口-2〜辛口+2の推定）,"body":-2から2の整数（淡麗-2〜濃醇+2の推定）,"label":{"x":数値,"y":数値,"w":数値,"h":数値}（1枚目の写真の中で表ラベルが写っている範囲。左上を0,0、右下を1,1とした割合。x,yは範囲の左上、w,hは幅と高さ。1枚目にラベルがなければ null）,"bottles":1枚目の写真の手前に置かれている日本酒の瓶の本数（整数。奥の棚や冷蔵庫の瓶は数えない）,"sure":true/false（銘柄と蔵を確信できるか）}
+1枚目に日本酒の瓶が2本以上写っている場合は、いちばん手前・中央の1本について答えてください。奥の棚や冷蔵庫・ショーケースに並んでいる瓶は無視し、手前（カウンターやテーブルの上など）に置かれた瓶だけを対象にしてください。ラベルに県が書かれていなくても、蔵がわかるなら所在県を答えてください。わからない項目は空文字か null にしてください。`;
+async function readLabel(files){
+  const st=$('ai-status');files=files.filter(Boolean);if(!files.length)return;
+  if(!sampleFn){st.className='ai-status';st.textContent='この画面ではラベルの自動読み取りが使えません。下の「ほかのAIで読み取る」を使うか、手で入力してください。';$('bridge').open=true;return}
+  aiCtl=new AbortController(); $('ai-stop').hidden=false; $('ai-read').hidden=true;
+  const use=files.slice(0,sampleMax);
+  st.className='ai-status dots'; st.textContent=use.length>1?`${use.length}枚の写真を読んでいます`:'ラベルを読んでいます';
+  try{
+    let r=await sampleFn.json(PROMPT,{images:use,signal:aiCtl.signal});
+    if(!r||typeof r!=='object')throw{code:'invalid_json'};
+    if(!r.name||r.sure===false){
+      st.textContent='ラベルを拡大して読み直しています';
+      let r2=null;try{r2=await rereadZoom(use[0],r.label,aiCtl.signal)}catch(e){if(e&&e.code==='cancelled')throw e}
+      if(r2&&typeof r2==='object'&&r2.name&&(r2.sure!==false||!r.name)){
+        const keep={};Object.entries(r2).forEach(([k,v])=>{if(k!=='label'&&k!=='bottles'&&v!=null&&v!=='')keep[k]=v});r={...r,...keep}}
+    }
+    let fromText=false;if(!r.name&&r.label_text){r.name=String(r.label_text).trim().slice(0,40);fromText=true}
+    const set=(id,val)=>{if(val!=null&&val!==''&&!$(id).value)$(id).value=val};
+    if(r.description&&!$('f-official').value){$('f-official').value=String(r.description).trim().slice(0,400);officialSrc='label';offMsg('ラベルの記載から入れました','ok')}
+    set('f-name',r.name); set('f-brewery',r.brewery); set('f-polish',r.polish); set('f-smv',r.smv);
+    const p=normPref(r.pref); if(p&&!$('f-pref').value)$('f-pref').value=p;
+    if(r.type&&[...$('f-type').options].some(o=>o.value===r.type)&&!$('f-type').value)$('f-type').value=r.type;
+    const clamp=x=>Math.max(-2,Math.min(2,Math.round(+x||0)));
+    if(r.dry!=null){$('f-dry').value=clamp(r.dry)} if(r.body!=null){$('f-body').value=clamp(r.body)}
+    $('taste-hint').textContent='（AIの推定。飲んだ感想で動かしてください）';
+    const lb=r.label;aiFocus=null;aiFile=use[0];
+    if(lb&&[lb.x,lb.y,lb.w,lb.h].every(v=>v!=null&&isFinite(+v))&&+lb.w>.03&&+lb.h>.03){const c=v=>Math.max(0,Math.min(1,+v));
+      const bx=c(lb.x),by=c(lb.y);aiFocus={x:bx,y:by,w:Math.min(c(lb.w),1-bx),h:Math.min(c(lb.h),1-by)}}
+    renderShots();
+    const nb=Math.round(+r.bottles||0);
+    if(nb>=2&&shots[0]&&shots[0].file===use[0]){splitFile=use[0];$('split-btn').textContent=`この写真に${nb}本写っています。1本ずつ分けて登録する`;$('split-btn').hidden=false}
+    st.className='ai-status ok'; st.textContent=(fromText?'銘柄を特定できなかったので、ラベルの文字を入れました。正しい銘柄に直してください':r.sure===false?'読み取りました。自信が低いので内容を確認してください':'読み取りました。内容を確認して保存してください')+(files.length>use.length?`（読み取りに使ったのは先頭の${use.length}枚）`:'');
+  }catch(e){
+    const code=e&&e.code;
+    st.className='ai-status'+(code==='cancelled'?'':' err');
+    st.textContent=code==='cancelled'?'読み取りを止めました。':code==='not_granted'||code==='sampling_disabled'?'読み取りが許可されていないため、手で入力してください。'
+      :code==='rate_limited'?'今は読み取りが混み合っています。少し待つか、手で入力してください。':code==='image_rejected'?'読み取れない写真がありました。別の写真を試してください。'
+      :'うまく読み取れませんでした。手で入力するか、明るい場所で撮り直してください。';
+    if(code==='not_granted'||code==='sampling_disabled'||code==='images_unavailable'){sampleFn=null;adaptUI();$('bridge').open=true}
+  }finally{$('ai-stop').hidden=true;aiCtl=null;updateAiRead()}
+}
+function renderShots(){
+  $('shots').hidden=!shots.length;
+  $('shots').innerHTML=shots.map((p,i)=>`<div class="shot${i?'':' main'}"><img src="${esc(shotSrc(p))}" alt="写真${i+1}"${shotPos(p)}>${i?'':'<span class="badge">メイン</span>'}
+    <button type="button" class="x" data-del="${i}" aria-label="写真${i+1}を外す">×</button>${i?`<button type="button" class="mk" data-main="${i}">メインにする</button>`:''}</div>`).join('');
+  $('add-photos').textContent=shots.length?'＋ 写真を追加（裏ラベル・料理など）':'＋ 写真を追加（複数まとめて選べます）';
+  updateAiRead();
+}
+function shotLabel(p){return p.main&&!p.file?p.label:(p.file&&p.file===aiFile?aiFocus:null)}
+function shotSrc(p){return p.main&&p.icon&&!p.file?p.icon:p.src}
+function shotPos(p){if(p.main&&p.icon&&!p.file)return'';const b=shotLabel(p);return b?` style="object-position:${((b.x+b.w/2)*100).toFixed(0)}% ${((b.y+b.h/2)*100).toFixed(0)}%"`:''}
+function updateAiRead(){$('ai-read').hidden=!sampleFn||!!aiCtl||!shots.some(p=>p.file)}
+function addFiles(files){files.forEach(f=>shots.push({file:f,src:URL.createObjectURL(f)}));renderShots()}
+$('shots').addEventListener('click',e=>{
+  const d=e.target.closest('[data-del]'),m=e.target.closest('[data-main]');
+  if(d){shots.splice(+d.dataset.del,1);renderShots()}
+  if(m){const i=+m.dataset.main;const [p]=shots.splice(i,1);shots.unshift(p);renderShots()}
+});
+async function onPhoto(e){
+  const files=[...(e.target.files||[])]; e.target.value=''; if(!files.length)return;
+  open(null); addFiles(files); readLabel(files);
+}
+$('file-cam').onchange=onPhoto; $('file-pick').onchange=onPhoto;
+$('file-more').onchange=e=>{const files=[...(e.target.files||[])];e.target.value='';if(!files.length)return;
+  const fresh=!shots.length&&!$('f-name').value; addFiles(files); if(fresh)readLabel(files)};
+$('add-photos').onclick=()=>$('file-more').click();
+$('split-btn').onclick=()=>{const f=splitFile;if(!f)return;close();openMulti(f)};
+$('ai-read').onclick=()=>readLabel(shots.filter(p=>p.file).map(p=>p.file));
+$('shoot').onclick=()=>$('file-cam').click(); $('pick').onclick=()=>$('file-pick').click();
+$('ai-stop').onclick=()=>aiCtl&&aiCtl.abort();
+
+/* ---- form ---- */
+function setRate(n){rating=n;[...$('f-rate').children].forEach((b,i)=>b.classList.toggle('on',i<n))}
+$('f-rate').innerHTML=[1,2,3,4,5].map(i=>`<button type="button" aria-label="${i}点">★</button>`).join('');
+[...$('f-rate').children].forEach((b,i)=>b.onclick=()=>setRate(rating===i+1?0:i+1));
+const today=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const FIELDS=['name','brewery','pref','type','polish','smv','date','food','memo'];
+function open(n){
+  editing=n||null; delArmed=false; aiFocus=null; aiFile=null; splitFile=null; $('split-btn').hidden=true;
+  shots=[];
+  if(n&&(n.photo||n.photoUrl))shots.push({old:true,main:true,src:n.photo||n.photoUrl,thumb:n.photo||'',id:n.photoId||'',url:n.photoUrl||'',label:n.label||null,focus:n.focus||null,icon:n.icon||''});
+  (n?.extras||[]).forEach(x=>shots.push({old:true,src:x.thumb||x.url,thumb:x.thumb||'',id:x.id||'',url:x.url||'',shared:!!x.shared}));
+  const d=n||{date:today(),dry:0,body:0};
+  $('ftitle').textContent=n?'記録を編集':'新しい記録';
+  FIELDS.forEach(k=>$('f-'+k).value=d[k]??'');
+  $('f-dry').value=d.dry??0; $('f-body').value=d.body??0; $('taste-hint').textContent='';
+  document.querySelectorAll('[name=temp]').forEach(r=>r.checked=r.value===d.temp);
+  document.querySelectorAll('#f-aroma input').forEach(c=>c.checked=(d.aroma||[]).includes(c.value));
+  document.querySelectorAll('#f-likes input').forEach(c=>c.checked=(d.likes||[]).includes(c.value));
+  setRate(d.rate||0);
+  $('ai-status').textContent=''; $('ai-status').className='ai-status'; $('lookup-status').hidden=true; lookupKey='';
+  $('bridge').open=!sampleFn&&!n; $('br-paste').value=''; $('br-status').textContent=''; $('br-prompt').hidden=true;
+  $('f-official').value=d.official||''; officialSrc=d.officialSrc||''; offMsg(srcLabel(officialSrc),'');
+  renderShots(); fillDatalists();
+  $('del').hidden=!n; $('del').textContent='削除'; $('to-share').hidden=!n;
+  $('sheet').hidden=false;
+}
+const close=()=>{aiCtl&&aiCtl.abort();$('sheet').hidden=true};
+function toast(t){const e=$('toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,1800)}
+async function blobOfUrl(u){const r=await fetch(u);if(!r.ok)throw 0;return r.blob()}
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const n={id:editing?.id||('n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6))};
+  FIELDS.forEach(k=>n[k]=$('f-'+k).value.trim());
+  n.dry=+$('f-dry').value; n.body=+$('f-body').value; n.rate=rating;
+  n.temp=(document.querySelector('[name=temp]:checked')||{}).value||'';
+  n.aroma=[...document.querySelectorAll('#f-aroma input:checked')].map(c=>c.value);
+  n.likes=[...document.querySelectorAll('#f-likes input:checked')].map(c=>c.value);
+  n.created=editing?.created||new Date().toISOString();
+  n.official=$('f-official').value.trim().slice(0,600); n.officialSrc=n.official?(officialSrc||'self'):'';
+  $('save').disabled=true;
+  const newCount=shots.filter(p=>p.file).length; if(newCount)$('save').textContent=`写真を保存中…（${newCount}枚）`;
+  try{
+    // main photo
+    const m=shots[0];
+    n.photo='';n.photoId='';n.photoUrl='';n.label=null;n.focus=null;n.bgSvg='';
+    if(m&&m.file){
+      n.photo=await thumbFrom(m.file);n.label=(aiFile===m.file)?aiFocus:null;
+      if(n.label){try{const u=URL.createObjectURL(m.file);const im=await loadImg(u);n.icon=labelIcon(im,n.label,1,192);URL.revokeObjectURL(u)}catch(err){}}
+      if(assetsFn){try{const up=await assetsFn.upload(await hiBlob(m.file));n.photoId=up.id;n.photoUrl=up.url}catch(err){}}
+    }else if(m){
+      n.photoId=m.id;n.photoUrl=m.url;n.label=m.main?m.label:null;n.focus=m.main?m.focus:null;
+      n.photo=m.thumb&&m.main?m.thumb:'';
+      if(!n.photo&&m.url){try{n.photo=await thumbFrom(await blobOfUrl(m.url))}catch(err){}}
+      if(!n.photo&&m.thumb)n.photo=m.thumb;
+      if(m.main){n.bgSvg=editing?.bgSvg||'';n.icon=editing?.icon||''}
+    }
+    // extra photos
+    n.extras=[];
+    for(const p of shots.slice(1)){
+      if(p.file){const x={};
+        if(assetsFn){try{const up=await assetsFn.upload(await hiBlob(p.file,1800));x.id=up.id;x.url=up.url}catch(err){}}
+        if(!x.url)x.thumb=await thumbFrom(p.file,420);
+        n.extras.push(x);
+      }else n.extras.push(p.url?{id:p.id,url:p.url,...(p.shared?{shared:true}:{})}:{thumb:p.main?await thumbFrom(dataUrlBlob(p.thumb),420):p.thumb});
+    }
+    await store.save(n);
+    // remove photos the person took out of this record
+    if(assetsFn&&editing){const keep=new Set([n.photoId,...n.extras.map(x=>x.id)].filter(Boolean));
+      [editing.photoId,...(editing.extras||[]).filter(x=>!x.shared).map(x=>x.id)].filter(id=>id&&!keep.has(id)).forEach(id=>assetsFn.delete(id).catch(()=>{}))}
+    close();toast('保存しました');
+  }catch(err){toast(err&&err.code==='too_big'?'写真が多すぎて保存できませんでした。追加写真を減らしてください':err&&err.code==='quota_exceeded'?'保存容量がいっぱいです。古い記録を削除してください':'保存できませんでした。通信を確認してもう一度お試しください')}
+  $('save').textContent='保存する';$('save').disabled=false;
+});
+$('del').onclick=async()=>{
+  if(!delArmed){delArmed=true;$('del').textContent='本当に削除';return}
+  try{const ids=[editing.photoId,...(editing.extras||[]).filter(x=>!x.shared).map(x=>x.id)].filter(Boolean);await store.remove(editing.id);
+    if(assetsFn)ids.forEach(id=>assetsFn.delete(id).catch(()=>{}));close();toast('削除しました')}catch(e){toast('削除できませんでした')}
+};
+$('cancel').onclick=close; $('manual').onclick=()=>open(null);
+$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')close()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('sheet').hidden)close()});
+const pickNote=e=>{const el=e.target.closest('[data-id]');if(el){const n=notes.find(x=>x.id===el.dataset.id);if(n)open(n)}};
+$('list').addEventListener('click',pickNote); $('taste').addEventListener('click',pickNote);
+$('japan').addEventListener('click',e=>{const g=e.target.closest('[data-pref]');if(!g)return;prefFilter=g.dataset.pref;tab('list');render()});
+$('filter-clear').onclick=()=>{prefFilter='';render()};
+$('q').oninput=render; $('sort').onchange=render;
+function tab(m){['list','japan','taste','all'].forEach(k=>{$('view-'+k).hidden=k!==m;$('tab-'+k).setAttribute('aria-selected',k===m)})}
+['list','japan','taste','all'].forEach(k=>$('tab-'+k).onclick=()=>{tab(k);if(k==='all'&&!allLoaded)loadAll()});
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',render);
+
+
+/* ---- Instagram share images ---- */
+function trendText(){
+  if(!notes.length)return'';
+  const ad=notes.reduce((a,n)=>a+(n.dry??0),0)/notes.length, ab=notes.reduce((a,n)=>a+(n.body??0),0)/notes.length;
+  const w=(x,neg,pos2)=>Math.abs(x)<.35?'':(Math.abs(x)<1.1?'やや':'')+(x<0?neg:pos2);
+  const a=w(ad,'甘口','辛口'),b=w(ab,'淡麗','濃醇');
+  return (a||b)?[a,b].filter(Boolean).join('・')+'寄り':'バランス型';
+}
+const K={ink:'#1b2130',muted:'#69708a',paper:'#ffffff',bg:'#f4f6fa',ai:'#24418f',aiSoft:'#e6ebf7',aiMid:'#8fa3d6',gold:'#b98a2a',shu:'#c4402f',line:'#dfe3ec'};
+const FD='"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif', FB='"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif';
+async function fontsReady(){try{await Promise.all([document.fonts.load('800 60px "Shippori Mincho B1"'),document.fonts.load('700 30px "Zen Kaku Gothic New"'),document.fonts.load('400 30px "Zen Kaku Gothic New"')])}catch(e){}}
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()}
+function janome(x,cx,cy,r){[[1,K.ai],[.78,K.paper],[.62,K.ai],[.46,K.paper]].forEach(([k,c])=>{x.beginPath();x.arc(cx,cy,r*k,0,Math.PI*2);x.fillStyle=c;x.fill()})}
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src})}
+function cover(x,im,X,Y,w,h,r){const s=Math.max(w/im.naturalWidth,h/im.naturalHeight),dw=im.naturalWidth*s,dh=im.naturalHeight*s;
+  x.save();x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';if(r){rr(x,X,Y,w,h,r);x.clip()}x.drawImage(im,X+(w-dw)/2,Y+(h-dh)/2,dw,dh);x.restore()}
+function wrap(x,t,maxW,maxL){const L=[];let cur='',over=false;for(const ch of String(t||'')){if(x.measureText(cur+ch).width>maxW&&cur){if(L.length===maxL-1){over=true;break}L.push(cur);cur=ch}else cur+=ch}
+  if(over){while(cur&&x.measureText(cur+'…').width>maxW)cur=cur.slice(0,-1);cur+='…'}if(cur)L.push(cur);return L}
+function chip(x,t,X,Y,bg,fg,h=50){x.font=`700 ${Math.round(h*.56)}px ${FB}`;const w=x.measureText(t).width+h*.72;rr(x,X,Y,w,h,h/2);x.fillStyle=bg;x.fill();x.fillStyle=fg;x.fillText(t,X+h*.36,Y+h*.7);return w}
+function miniTaste(x,X,Y,S,n){
+  rr(x,X,Y,S,S,18);x.fillStyle=K.paper;x.fill();x.strokeStyle=K.line;x.lineWidth=2;x.stroke();
+  x.beginPath();x.moveTo(X+S/2,Y+14);x.lineTo(X+S/2,Y+S-14);x.moveTo(X+14,Y+S/2);x.lineTo(X+S-14,Y+S/2);x.stroke();
+  x.font=`700 22px ${FB}`;x.fillStyle=K.muted;x.textAlign='center';
+  x.fillText('淡麗',X+S/2+(S/4),Y+34);x.fillText('濃醇',X+S/2+(S/4),Y+S-16);
+  x.textAlign='left';x.fillText('甘',X+14,Y+S/2-10);x.textAlign='right';x.fillText('辛',X+S-14,Y+S/2-10);x.textAlign='left';
+  const px=X+24+((n.dry??0)+2)/4*(S-48),py=Y+24+((n.body??0)+2)/4*(S-48);
+  x.beginPath();x.arc(px,py,17,0,Math.PI*2);x.fillStyle=K.shu;x.fill();x.lineWidth=5;x.strokeStyle=K.paper;x.stroke();
+}
+function footer(x,W,y,right){janome(x,64+22,y-14,22);x.font=`800 34px ${FD}`;x.fillStyle=K.ink;x.fillText('蛇の目ノート',64+58,y);
+  x.font=`400 28px ${FB}`;x.fillStyle=K.muted;x.textAlign='right';x.fillText(right||'',W-64,y);x.textAlign='left'}
+function shareOpts(){
+  const layout=(document.querySelector('[name=layout]:checked')||{}).value||'overlay';
+  const show={};document.querySelectorAll('#s-items input').forEach(c=>show[c.value]=c.checked);
+  return {layout,show};
+}
+const prefFull=p=>p==='北海道'?p:p+(p==='東京'?'都':p==='京都'||p==='大阪'?'府':'県');
+async function noteCard(n,fmt){
+  const o=shareOpts(); return o.layout==='overlay'?noteOverlay(n,fmt,o.show):o.layout==='gen'?noteGen(n,fmt,o.show):noteBoard(n,fmt,o.show);
+}
+async function noteBoard(n,fmt,show){
+  await fontsReady();
+  const story=fmt==='story',W=1080,H=story?1920:1350,M=64,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle=K.bg;x.fillRect(0,0,W,H);
+  const py=story?200:64,ph=story?860:640;
+  let drawn=false; const im=await photoFor(n); if(im){drawPhoto(x,im,M,py,W-2*M,ph,28,photoOpt(n));drawn=true}
+  if(!drawn){rr(x,M,py,W-2*M,ph,28);x.fillStyle=K.aiSoft;x.fill();janome(x,W/2,py+ph/2,ph*.28)}
+  let y=py+ph+46,cx=M; const top0=y;
+  if(show.type&&n.type)cx+=chip(x,n.type,cx,y,K.ai,K.paper)+12;
+  if(show.brewery&&n.pref)cx+=chip(x,prefFull(n.pref),cx,y,K.aiSoft,K.ai)+12;
+  if(cx>M)y+=50;
+  const mapS=210,useMap=show.taste,colW=W-2*M-(useMap?mapS+30:0); if(useMap)miniTaste(x,W-M-mapS,top0,mapS,n);
+  x.font=`800 62px ${FD}`;x.fillStyle=K.ink;
+  wrap(x,n.name,colW,2).forEach(l=>{y+=74;x.fillText(l,M,y)});
+  if(show.brewery&&n.brewery){y+=48;x.font=`400 34px ${FB}`;x.fillStyle=K.muted;x.fillText(wrap(x,n.brewery,colW,1)[0],M,y)}
+  if(show.rate){y+=68;x.font=`700 48px ${FB}`;for(let i=0;i<5;i++){x.fillStyle=i<(n.rate||0)?K.gold:K.line;x.fillText('★',M+i*54,y)}}
+  if(useMap)y=Math.max(y,top0+mapS-10);
+  const bottom=story?1630:H-118;
+  if(show.likes&&n.likes&&n.likes.length&&y+70<bottom){y+=24;y+=likeRow(x,n.likes,M,y,W-M,K.shu,'transparent')}
+  if(show.food&&n.food&&y+56<bottom){x.font=`400 32px ${FB}`;x.fillStyle=K.ink;y+=50;x.fillText(wrap(x,'料理：'+n.food,W-2*M,1)[0],M,y)}
+  if(show.memo&&n.memo){x.font=`400 32px ${FB}`;x.fillStyle=K.ink;const L=Math.max(0,Math.min(story?3:2,Math.floor((bottom-y-10)/48)));
+    if(L){y+=10;wrap(x,n.memo,W-2*M,L).forEach(l=>{y+=48;x.fillText(l,M,y)})}}
+  footer(x,W,story?1720:H-52,(n.date||'').replaceAll('-','.'));
+  return c;
+}
+function likeRow(x,likes,X,Y,maxX,col,fill){
+  let lx=X;x.font=`700 26px ${FB}`;x.fillStyle=col;x.fillText('好き',lx,Y+31);lx+=70;
+  likes.forEach(t=>{x.font=`700 25px ${FB}`;const w=x.measureText(t).width+32;if(lx+w>maxX)return;rr(x,lx,Y,w,44,22);
+    if(fill!=='transparent'){x.fillStyle=fill;x.fill()}x.strokeStyle=col;x.lineWidth=2.5;x.stroke();x.fillStyle=col;x.fillText(t,lx+16,Y+31);lx+=w+10});
+  return 44;
+}
+function overlayText(x,n,show,story,W,H,minY){
+  const M=64,WH='#ffffff',SUB='rgba(255,255,255,.84)';
+  x.font=`800 74px ${FD}`;const nameL=wrap(x,n.name,W-2*M,2);
+  const chips=(show.type&&n.type)||(show.brewery&&n.pref);
+  const hasLikes=show.likes&&n.likes&&n.likes.length,hasFood=show.food&&n.food,hasBrew=show.brewery&&n.brewery;
+  const bottom=story?1640:H-120;
+  const fixed=(chips?70:0)+nameL.length*86+(hasBrew?54:0)+(show.rate?70:0)+(hasLikes?70:0)+(hasFood?50:0);
+  x.font=`400 32px ${FB}`;const room=Math.floor((bottom-minY-fixed-12)/48);
+  const memoL=show.memo&&n.memo&&room>0?wrap(x,n.memo,W-2*M,Math.min(story?3:2,room)):[];
+  const total=fixed+memoL.length*48+(memoL.length?12:0);
+  let y=Math.max(minY,bottom-total);
+  if(chips){let cx=M;if(show.type&&n.type)cx+=chip(x,n.type,cx,y,K.shu,WH)+12;if(show.brewery&&n.pref)chip(x,prefFull(n.pref),cx,y,'rgba(255,255,255,.92)',K.ai);y+=70}
+  x.font=`800 74px ${FD}`;x.fillStyle=WH;x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=12;
+  nameL.forEach(l=>{y+=80;x.fillText(l,M,y)});y+=6;
+  if(hasBrew){y+=48;x.font=`500 34px ${FB}`;x.fillStyle=SUB;x.fillText(wrap(x,n.brewery,W-2*M,1)[0],M,y)}
+  x.shadowBlur=0;
+  if(show.rate){y+=66;x.font=`700 48px ${FB}`;for(let i=0;i<5;i++){x.fillStyle=i<(n.rate||0)?'#f0c75e':'rgba(255,255,255,.35)';x.fillText('★',M+i*54,y)}}
+  if(hasLikes){y+=24;likeRow(x,n.likes,M,y,W-M,WH,'rgba(255,255,255,.12)');y+=46}
+  if(hasFood){y+=46;x.font=`400 32px ${FB}`;x.fillStyle=SUB;x.fillText(wrap(x,'料理：'+n.food,W-2*M,1)[0],M,y)}
+  if(memoL.length){y+=12;x.font=`400 32px ${FB}`;x.fillStyle=WH;memoL.forEach(l=>{y+=48;x.fillText(l,M,y)})}
+  const fy=story?1730:H-46;janome(x,M+20,fy-12,20);x.font=`800 32px ${FD}`;x.fillStyle=WH;x.fillText('蛇の目ノート',M+54,fy);
+  x.font=`400 26px ${FB}`;x.fillStyle=SUB;x.textAlign='right';x.fillText((n.date||'').replaceAll('-','.'),W-M,fy);x.textAlign='left';
+}
+function bottomShade(x,W,H,from){const g=x.createLinearGradient(0,H*from,0,H);g.addColorStop(0,'rgba(10,14,30,0)');g.addColorStop(.45,'rgba(10,14,30,.6)');g.addColorStop(1,'rgba(10,14,30,.9)');x.fillStyle=g;x.fillRect(0,0,W,H)}
+async function noteOverlay(n,fmt,show){
+  await fontsReady();
+  const story=fmt==='story',W=1080,H=story?1920:1350,M=64,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#1c2a55';x.fillRect(0,0,W,H);
+  const im=await photoFor(n);if(im)drawPhoto(x,im,0,0,W,H,0,photoOpt(n));else janome(x,W/2,H*.32,W*.28);
+  bottomShade(x,W,H,.4);
+  const tg=x.createLinearGradient(0,0,0,story?420:260);tg.addColorStop(0,'rgba(10,14,30,.45)');tg.addColorStop(1,'rgba(10,14,30,0)');x.fillStyle=tg;x.fillRect(0,0,W,story?420:260);
+  const topY=story?210:64;
+  if(show.taste){x.save();x.globalAlpha=.94;miniTaste(x,W-M-190,topY,190,n);x.restore()}
+  overlayText(x,n,show,story,W,H,topY+(show.taste?220:0));
+  return c;
+}
+async function noteGen(n,fmt,show){
+  await fontsReady();
+  const story=fmt==='story',W=1080,H=story?1920:1350,M=64,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  let bg=null;if(n.bgSvg){try{bg=await svgImg(n.bgSvg)}catch(e){}}
+  const im=await photoFor(n);
+  if(bg){x.drawImage(bg,0,(H-1920)/2,1080,1920)}
+  else{const pal=im?paletteOf(im):[];const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,pal[0]||'#2c3f7a');g.addColorStop(1,'#141a2e');x.fillStyle=g;x.fillRect(0,0,W,H)}
+  bottomShade(x,W,H,.5);
+  const cw=story?800:700,ch=story?960:700,cx=(W-cw)/2,cy=story?230:80,B=14;
+  x.save();x.shadowColor='rgba(0,0,0,.45)';x.shadowBlur=40;x.shadowOffsetY=16;rr(x,cx-B,cy-B,cw+2*B,ch+2*B,26);x.fillStyle='#ffffff';x.fill();x.restore();
+  if(im)drawPhoto(x,im,cx,cy,cw,ch,16,{...photoOpt(n),anchorY:.5});else{rr(x,cx,cy,cw,ch,16);x.fillStyle=K.aiSoft;x.fill();janome(x,W/2,cy+ch/2,ch*.25)}
+  if(show.taste){x.save();x.globalAlpha=.94;miniTaste(x,W-M-170,cy+ch-120,170,n);x.restore()}
+  overlayText(x,n,show,story,W,H,cy+ch+B+30);
+  return c;
+}
+async function summaryCard(fmt){
+  await fontsReady();
+  const story=fmt==='story',W=1080,H=story?1920:1350,M=64,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#1c2a55';x.fillRect(0,0,W,H);
+  // background: best-rated record with a photo
+  const bgNote=[...notes].filter(n=>n.photo||n.photoUrl).sort((a,b)=>(b.rate||0)-(a.rate||0)||(b.date||'').localeCompare(a.date||''))[0];
+  if(bgNote){const im=await photoFor(bgNote);if(im)drawPhoto(x,im,0,0,W,H,0,{auto:true,box:boxFor(bgNote),anchorY:.4})}else janome(x,W*.78,H*.18,W*.3);
+  x.fillStyle='rgba(10,14,30,.62)';x.fillRect(0,0,W,H);
+  const WH='#ffffff',SUB='rgba(255,255,255,.82)';
+  x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=10;
+  const cnt={};notes.forEach(n=>{if(n.pref)cnt[n.pref]=(cnt[n.pref]||0)+1});const np=Object.keys(cnt).length;
+  let y=story?260:120; x.font=`800 ${story?64:54}px ${FD}`;x.fillStyle=WH;x.fillText('飲んできた日本酒',M,y);
+  y+=story?150:110; const big=story?150:110;
+  x.font=`800 ${big}px ${FD}`;x.fillText(String(notes.length),M,y);let w=x.measureText(String(notes.length)).width;
+  x.font=`700 ${big*.34}px ${FB}`;x.fillText('本',M+w+10,y);
+  const x2=M+w+10+big*.34+60;x.font=`800 ${big}px ${FD}`;x.fillText(String(np),x2,y);w=x.measureText(String(np)).width;
+  x.font=`700 ${big*.34}px ${FB}`;x.fillText('都道府県',x2+w+10,y);
+  x.shadowBlur=0;
+  const step=story?80:62,T=step-6,ox=(W-12*step)/2,oy=y+(story?50:36);
+  PREFS.forEach(([p,gx,gy])=>{const n=cnt[p]||0,X=ox+gx*step,Y=oy+gy*step;rr(x,X,Y,T,T,8);
+    x.fillStyle=n>=2?'#ffffff':n===1?'rgba(143,163,214,.95)':'rgba(255,255,255,.16)';x.fill();
+    x.fillStyle=n>=2?K.ai:n===1?WH:'rgba(255,255,255,.72)';x.textAlign='center';x.font=`${n?700:400} ${Math.round(T*.27)}px ${FB}`;x.fillText(p.length>2?p.slice(0,2):p,X+T/2,Y+T*.38);
+    if(n){x.font=`700 ${Math.round(T*.36)}px ${FB}`;x.fillText(String(n),X+T/2,Y+T*.82)}x.textAlign='left'});
+  y=oy+12*step+(story?40:24);
+  x.shadowBlur=10;
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  x.font=`700 ${story?36:30}px ${FB}`;x.fillStyle=WH;
+  if(top.length){x.fillText('多い県　'+top.map(([p,n])=>`${p} ${n}`).join('・'),M,y);y+=story?62:50}
+  if(notes.length){x.font=`800 ${story?42:34}px ${FD}`;x.fillStyle='#f0c75e';x.fillText('好み：'+trendText(),M,y)}
+  x.shadowBlur=0;
+  const fy=story?1730:H-46; janome(x,M+20,fy-12,20);x.font=`800 32px ${FD}`;x.fillStyle=WH;x.fillText('蛇の目ノート',M+54,fy);
+  x.font=`400 26px ${FB}`;x.fillStyle=SUB;x.textAlign='right';x.fillText(today().replaceAll('-','.'),W-M,fy);x.textAlign='left';
+  return c;
+}
+function hashName(s){return String(s||'').split(/[\s　]/)[0].replace(/[^\p{L}\p{N}ー]/gu,'')}
+function captionFor(n){
+  const tags=['#日本酒','#日本酒好き','#sake'];
+  if(n){const h=hashName(n.name);if(h)tags.unshift('#'+h);if(n.pref)tags.push('#'+n.pref+'の酒');if(n.type)tags.push('#'+n.type);
+    return [n.name,[n.brewery,n.pref?'（'+n.pref+'）':''].join(''),n.type?n.type+(n.polish?' 精米歩合'+n.polish+'%':''):'',
+      stars(n.rate),n.likes&&n.likes.length?'好きなところ：'+n.likes.join('・'):'',n.food?'合わせた料理：'+n.food:'',n.memo,'',tags.join(' ')].filter((l,i)=>l!==''||i===7).join('\n').replace(/\n{3,}/g,'\n\n')}
+  const cnt={};notes.forEach(x=>{if(x.pref)cnt[x.pref]=(cnt[x.pref]||0)+1});
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  return `これまでに飲んだ日本酒 ${notes.length}本・${Object.keys(cnt).length}都道府県\n`+(top.length?'多い県：'+top.map(([p,c])=>p+' '+c+'本').join('、')+'\n':'')+(notes.length?'好み：'+trendText()+'\n':'')+'\n'+[...tags,'#日本酒記録'].join(' ');
+}
+let shareTarget=null,shareCanvas=null;
+async function drawShare(){
+  const fmt=(document.querySelector('[name=fmt]:checked')||{}).value||'post';
+  $('s-img').style.opacity=.4;
+  shareCanvas=shareTarget==='summary'?await summaryCard(fmt):shareTarget==='promo'?await promoCard(fmt,promoAll()):await noteCard(shareTarget,fmt);
+  $('s-img').src=shareCanvas.toDataURL('image/jpeg',.9);$('s-img').style.opacity=1;
+  const low=typeof shareTarget==='object'&&lastPhotoW>0&&lastPhotoW<1200;
+  $('s-low').hidden=!low; updateGenUI();
+}
+function openShare(target){
+  shareTarget=target; $('stitle').textContent=target==='summary'?'まとめ画像（投稿用）':target==='promo'?'アプリ紹介の画像':'投稿用の画像';
+  $('s-promo').hidden=target!=='promo';
+  $('s-cap').value=target==='promo'?promoCaption():captionFor(target==='summary'?null:target);
+  $('s-hint').textContent=dlFn?'保存した画像をSNSで選んで投稿できます。リールやストーリーズでは背景にも使えます。':'画像を長押しして保存してください。SNSで選んで投稿できます。';
+  $('s-save').hidden=false; $('s-opts').hidden=typeof target!=='object'; $('share').hidden=false; drawShare();
+}
+document.querySelectorAll('[name=fmt],[name=layout],#s-items input,#s-auto').forEach(r=>r.onchange=drawShare);
+const SK='janome-share-opts2';
+try{const v=JSON.parse(localStorage.getItem(SK)||'null');if(v){document.querySelectorAll('[name=layout]').forEach(r=>r.checked=r.value===v.layout);document.querySelectorAll('#s-items input').forEach(c=>{if(c.value in v.show)c.checked=v.show[c.value]})}}catch(e){}
+document.querySelectorAll('[name=layout],#s-items input').forEach(r=>r.addEventListener('change',()=>{try{localStorage.setItem(SK,JSON.stringify(shareOpts()))}catch(e){}}));
+$('to-share').onclick=()=>{if(editing)openShare(editing)};
+$('sum-share').onclick=()=>{if(!notes.length){toast('記録を1本以上つけると作れます');return}openShare('summary')};
+$('s-close').onclick=()=>{$('share').hidden=true};
+$('share').addEventListener('click',e=>{if(e.target.id==='share')$('share').hidden=true});
+$('s-save').onclick=async()=>{
+  if(!shareCanvas)return;
+  const blob=await new Promise(r=>shareCanvas.toBlob(r,'image/jpeg',.95));
+  const base=shareTarget==='summary'?'日本酒まとめ':shareTarget==='promo'?'蛇の目ノート紹介':hashName(shareTarget.name)||'日本酒';
+  if(!dlFn){saveBlob(blob,base+'.jpg');return}
+  try{await dlFn.save({filename:base+'.jpg',data:blob});toast('保存しました')}
+  catch(e){const c=e&&e.code;if(c==='declined')return;
+    if(c==='rate_limited'){toast('少し待ってからもう一度押してください');return}
+    dlFn=null;$('s-save').hidden=true;$('s-hint').textContent='この画面では保存ボタンが使えません。画像を長押しして保存してください。'}
+};
+$('s-copy').onclick=async()=>{const t=$('s-cap').value;
+  try{await navigator.clipboard.writeText(t);toast('コピーしました')}catch(e){$('s-cap').focus();$('s-cap').select();toast('選択しました。コピーしてください')}};
+
+/* ---- high-resolution photos ---- */
+function hiBlob(file,max=2160){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{const sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
+    c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);const x=c.getContext('2d');x.imageSmoothingQuality='high';
+    x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>b?res(b):rej(),'image/jpeg',.9)};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej()};img.src=url})}
+const hiCache={};
+async function photoFor(n){
+  let im=null;
+  if(shareHi&&shareHi.id===n.id)im=shareHi.img;
+  else if(n.photoUrl){im=hiCache[n.photoUrl]||null;
+    if(!im){try{const r=await fetch(n.photoUrl);if(r.ok){im=await loadImg(URL.createObjectURL(await r.blob()));hiCache[n.photoUrl]=im}}catch(e){}}}
+  if(!im&&n.photo){try{im=await loadImg(n.photo)}catch(e){}}
+  lastPhotoW=im?Math.max(im.naturalWidth,im.naturalHeight):0;
+  return im;
+}
+$('s-hi').onclick=()=>$('s-file').click();
+$('s-file').onchange=async e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f||!shareTarget||typeof shareTarget!=='object')return;
+  let blob;try{blob=await hiBlob(f)}catch(err){toast('この写真は開けませんでした');return}
+  shareHi={id:shareTarget.id,img:await loadImg(URL.createObjectURL(blob))};drawShare();
+  if(assetsFn){try{const up=await assetsFn.upload(blob);const old=shareTarget.photoId;
+    const n={...shareTarget,photoId:up.id,photoUrl:up.url,focus:null,label:null,icon:''};if(!n.photo)n.photo=await thumbFrom(f);
+    await store.save(n);shareTarget=n;if(old&&old!==up.id)assetsFn.delete(old).catch(()=>{});toast('高画質の写真を記録に保存しました')}catch(err){}}
+};
+
+/* ---- label-first photo correction ----
+   1) find the label (AI box, else edge-dense area)  2) frame and zoom so the label is large
+   3) set levels/gamma from the label pixels only  4) sharpen and gently dim everything around it */
+const anaCache=new WeakMap();
+function boxFor(n){if(n&&n.label&&n.label.w>0)return n.label;if(n&&n.focus)return{x:n.focus.x-.2,y:n.focus.y-.22,w:.4,h:.44};return null}
+function analyze(im,box){
+  let per=anaCache.get(im);if(!per){per={};anaCache.set(im,per)}
+  const key=box?[box.x,box.y,box.w,box.h].map(v=>v.toFixed(3)).join(','):'auto';if(key in per)return per[key];
+  const sw=160,sh=Math.max(1,Math.round(sw*im.naturalHeight/im.naturalWidth)),c=document.createElement('canvas');c.width=sw;c.height=sh;
+  const x=c.getContext('2d');x.drawImage(im,0,0,sw,sh);let d;try{d=x.getImageData(0,0,sw,sh).data}catch(e){return per[key]=null}
+  const g=new Float32Array(sw*sh);for(let i=0,j=0;i<d.length;i+=4,j++)g[j]=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+  if(!box){let sx=0,sy=0,sxx=0,syy=0,tw=0;
+    for(let y=1;y<sh-1;y++)for(let xx=1;xx<sw-1;xx++){const k=y*sw+xx,e=Math.abs(g[k+1]-g[k-1])+Math.abs(g[k+sw]-g[k-sw]);
+      const cx=xx/sw-.5,cy=y/sh-.5,w=e*e*Math.exp(-(cx*cx+cy*cy)*3),u=xx/sw,v=y/sh;sx+=w*u;sy+=w*v;sxx+=w*u*u;syy+=w*v*v;tw+=w}
+    const mx=tw?sx/tw:.5,my=tw?sy/tw:.5,dx=Math.sqrt(Math.max(0,(tw?sxx/tw:0)-mx*mx)),dy=Math.sqrt(Math.max(0,(tw?syy/tw:0)-my*my));
+    const bw=Math.max(.25,Math.min(.7,dx*3.2)),bh=Math.max(.25,Math.min(.7,dy*3.2));
+    box={x:Math.max(0,mx-bw/2),y:Math.max(0,my-bh/2),w:bw,h:bh}}
+  const hist=new Array(256).fill(0);let N=0;
+  const x0=Math.floor(box.x*sw),x1=Math.ceil((box.x+box.w)*sw),y0=Math.floor(box.y*sh),y1=Math.ceil((box.y+box.h)*sh);
+  for(let y=Math.max(0,y0);y<Math.min(sh,y1);y++)for(let xx=Math.max(0,x0);xx<Math.min(sw,x1);xx++){hist[Math.min(255,g[y*sw+xx]|0)]++;N++}
+  let lut=null;
+  if(N>20){const pct=q=>{let a=0;for(let v=0;v<256;v++){a+=hist[v];if(a>=N*q)return v}return 255};
+    let lo=Math.min(pct(.02),60),hi=Math.max(pct(.98),170);
+    if(hi-lo>=50){let m=0;for(let v=0;v<256;v++)m+=hist[v]*Math.min(1,Math.max(0,(v-lo)/(hi-lo)));m/=N;
+      const gamma=Math.max(.7,Math.min(1.5,Math.log(.52)/Math.log(Math.max(.05,Math.min(.95,m)))));
+      lut=new Uint8ClampedArray(256);for(let v=0;v<256;v++){const t=Math.min(1,Math.max(0,(v-lo)/(hi-lo)));lut[v]=Math.round(255*Math.pow(t,1/gamma))}}}
+  return per[key]={lut,box};
+}
+function photoOpt(n){const a=$('s-auto'),lay=shareOpts().layout;
+  return{auto:!a||a.checked,box:(shareHi&&shareHi.id===n.id)?null:boxFor(n),anchorY:lay==='overlay'?.34:.5}}
+function drawPhoto(x,im,X,Y,w,h,r,opt){
+  w=Math.round(w);h=Math.round(h);
+  const iw=im.naturalWidth,ih=im.naturalHeight,cs=Math.max(w/iw,h/ih);
+  const a=opt.auto?analyze(im,opt.box):null,b=(a&&a.box)||opt.box||{x:.25,y:.25,w:.5,h:.5};
+  let s=cs;if(opt.auto){const z=Math.min(.8*w/(b.w*iw),.6*h/(b.h*ih));s=Math.max(cs,Math.min(cs*2.2,z))}
+  const dw=iw*s,dh=ih*s,fx=b.x+b.w/2,fy=b.y+b.h/2,ay=opt.anchorY??.5;
+  const ox=Math.min(X,Math.max(X+w-dw,X+w/2-fx*dw)),oy=Math.min(Y,Math.max(Y+h-dh,Y+h*ay-fy*dh));
+  x.save();x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';if(r){rr(x,X,Y,w,h,r);x.clip()}
+  if(!a){x.drawImage(im,ox,oy,dw,dh);x.restore();return}
+  const oc=document.createElement('canvas');oc.width=w;oc.height=h;const o=oc.getContext('2d');o.imageSmoothingQuality='high';
+  o.drawImage(im,ox-X,oy-Y,dw,dh);
+  try{const id=o.getImageData(0,0,w,h),p=id.data,src=new Uint8ClampedArray(p),L=a.lut,K2=.16,S=1.06;
+    const lcx=ox-X+fx*dw,lcy=oy-Y+fy*dh,rx=b.w*dw*.62,ry=b.h*dh*.62;
+    for(let y=0;y<h;y++){for(let xx=0;xx<w;xx++){const i=(y*w+xx)*4;
+      const ddx=(xx-lcx)/rx,ddy=(y-lcy)/ry,dist=Math.sqrt(ddx*ddx+ddy*ddy),dim=1-.3*Math.min(1,Math.max(0,(dist-1)/1.6));
+      const inL=dist<1.15&&xx>0&&y>0&&xx<w-1&&y<h-1;
+      for(let ch=0;ch<3;ch++){let v=src[i+ch];
+        if(inL){v=v*(1+4*K2)-K2*(src[i+ch-4]+src[i+ch+4]+src[i+ch-w*4]+src[i+ch+w*4])}
+        v=v<0?0:v>255?255:v;p[i+ch]=L?L[v|0]:v}
+      const l=.299*p[i]+.587*p[i+1]+.114*p[i+2];
+      for(let ch=0;ch<3;ch++)p[i+ch]=(l+(p[i+ch]-l)*S)*dim}}
+    o.putImageData(id,0,0)}catch(e){}
+  x.drawImage(oc,X,Y);x.restore();
+}
+/* ---- generated background (Claude draws an SVG illustration) ---- */
+function paletteOf(im){const c=document.createElement('canvas');c.width=40;c.height=Math.max(1,Math.round(40*im.naturalHeight/im.naturalWidth));
+  const x=c.getContext('2d');x.drawImage(im,0,0,c.width,c.height);let d;try{d=x.getImageData(0,0,c.width,c.height).data}catch(e){return[]}
+  const m={};for(let i=0;i<d.length;i+=4){const k=(d[i]>>5)+','+(d[i+1]>>5)+','+(d[i+2]>>5);m[k]=(m[k]||0)+1}
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k])=>'#'+k.split(',').map(v=>((+v<<5)+16).toString(16).padStart(2,'0')).join(''))}
+function dataUrlBlob(u){const [h,b]=u.split(',');const bin=atob(b),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:(h.match(/:(.*?);/)||[])[1]||'image/jpeg'})}
+function cleanSvg(t){const m=String(t||'').match(/<svg[\s\S]*<\/svg>/i);if(!m)return'';let s=m[0];
+  s=s.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi,'').replace(/<(image|text|use|a)\b[\s\S]*?(\/>|<\/\1>)/gi,'')
+     .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi,'').replace(/(xlink:)?href\s*=\s*("[^"#][^"]*"|'[^'#][^']*')/gi,'');
+  if(!/xmlns=/.test(s.slice(0,300)))s=s.replace(/<svg/i,'<svg xmlns="http://www.w3.org/2000/svg"');
+  if(!/\swidth=/.test(s.slice(0,300)))s=s.replace(/<svg/i,'<svg width="1080" height="1920"');
+  if(!/viewBox=/.test(s.slice(0,300)))s=s.replace(/<svg/i,'<svg viewBox="0 0 1080 1920"');
+  return s.length<120000?s:''}
+const svgImg=svg=>loadImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg));
+let genBusy=false;
+async function generateBg(){
+  const n=shareTarget;if(!n||typeof n!=='object'||genBusy)return;
+  if(!sampleFn){$('s-gen-status').className='ai-status err';$('s-gen-status').textContent='この画面では背景の生成が使えません。';return}
+  genBusy=true;$('s-gen-btn').disabled=true;$('s-gen-status').className='ai-status dots';$('s-gen-status').textContent='背景を描いています（1分ほど）';
+  const im=await photoFor(n),pal=im?paletteOf(im):[];
+  const prompt=`日本酒の投稿画像の背景に使う、縦長のSVGイラストを1枚描いてください。
+お酒：${n.name||''}　酒蔵：${n.brewery||'不明'}　蔵の所在地：${n.pref?prefFull(n.pref):'不明'}　${n.type||''}
+ラベル写真から取った色：${pal.join(' ')||'なし'}${im?'（添付の写真はラベルです。デザインの雰囲気も参考にしてください）':''}
+条件：
+- viewBox="0 0 1080 1920"、width="1080" height="1920"。
+- 酒蔵のある土地らしい風景や季節（雪国なら雪山、海沿いなら海、米どころなら田園や稲穂、山あいなら山と川など）を、和の平面的なグラフィックで。ラベルの色を主役にした配色。
+- 上から60%のあたりの中央に写真を額のように重ねるので、そこは細かく描き込みすぎない。下の40%は濃い色にして、白い文字が読めるようにする。
+- 文字、人物、ロゴ、酒瓶は描かない。使ってよいのは rect, path, circle, ellipse, polygon, polyline, line, g, defs, linearGradient, radialGradient, stop だけ。image, text, script, 外部参照は使わない。
+- 全体で12000文字以内。SVGのコードだけを返す。`;
+  try{
+    const opts={cache:false};if(n.photo){try{opts.images=dataUrlBlob(n.photo)}catch(e){}}
+    let r;try{r=await sampleFn(prompt,opts)}catch(e){if(e&&e.code==='images_unavailable'){delete opts.images;r=await sampleFn(prompt,opts)}else throw e}
+    const svg=cleanSvg(r.text);if(!svg)throw{code:'bad_svg'};
+    await svgImg(svg);
+    const nn={...n,bgSvg:svg};shareTarget=nn;
+    if(svg.length<50000){try{await store.save(nn)}catch(e){}}
+    $('s-gen-status').className='ai-status ok';$('s-gen-status').textContent='背景ができました';
+    drawShare();
+  }catch(e){const c=e&&e.code;$('s-gen-status').className='ai-status err';
+    $('s-gen-status').textContent=c==='not_granted'||c==='sampling_disabled'?'Claudeの利用が許可されていないため生成できません。':c==='rate_limited'?'今は混み合っています。少し待ってからもう一度押してください。':c==='cancelled'?'':'うまく描けませんでした。もう一度押してください。'}
+  finally{genBusy=false;$('s-gen-btn').disabled=false;updateGenUI()}
+}
+function updateGenUI(){const gen=shareOpts().layout==='gen'&&typeof shareTarget==='object';$('s-gen').hidden=!gen;
+  if(gen)$('s-gen-btn').textContent=shareTarget&&shareTarget.bgSvg?'背景を作り直す':'背景を生成する'}
+$('s-gen-btn').onclick=generateBg;
+document.querySelectorAll('[name=layout]').forEach(r=>r.addEventListener('change',()=>{updateGenUI();if(r.checked&&r.value==='gen'&&shareTarget&&typeof shareTarget==='object'&&!shareTarget.bgSvg)generateBg()}));
+
+/* ---- several bottles in one photo: find, crop, register each ---- */
+const MPROMPT=`この写真には日本酒の瓶が複数写っています。写っている日本酒の瓶を左から順にすべて探して、JSON配列だけで返してください（最大12本）。
+各要素の形：{"box":{"x":数値,"y":数値,"w":数値,"h":数値}（瓶1本の全体が入る範囲。キャップから瓶の底まで、下の方にあるラベルも必ず含める。写真の左上を0,0、右下を1,1とした割合。x,yは左上、w,hは幅と高さ。隣の瓶はなるべく含めない）,"label":{"x":数値,"y":数値,"w":数値,"h":数値}（その瓶の表ラベルの範囲。同じ座標。見えなければ null）,"name":"銘柄名（特定できないときは、ラベルに大きく書かれた文字やロゴの漢字をそのまま）","label_text":"ラベルに見える文字をそのまま","description":"ラベルに印刷された商品紹介やテイスティングコメントがあればその文章（なければ空文字）","brewery":"酒造名","pref":"蔵の所在都道府県（都府県を付けない。北海道はそのまま）","type":"純米大吟醸/大吟醸/純米吟醸/吟醸/特別純米/純米/特別本醸造/本醸造/普通酒/スパークリング/クラフトサケ のどれか（瓶内二次発酵や炭酸ガス入りなど、発泡性の日本酒としてラベルに表示があればスパークリング）（クラフトサケは、日本酒の製法をもとに果物やハーブなどの副原料を加えて造られ、ラベルに『クラフトサケ』や『その他の醸造酒』と表示のあるもの）、不明なら空文字","polish":数値またはnull,"smv":数値またはnull,"dry":-2〜2の整数（甘口〜辛口の推定）,"body":-2〜2の整数（淡麗〜濃醇の推定）,"sure":true/false}
+日本酒以外（ビール、焼酎、ワイン、ウイスキーなど）の瓶は含めないでください。奥の棚や冷蔵庫・ショーケースに並んでいる瓶は無視し、手前（カウンターやテーブルの上など）に置かれた瓶だけを対象にしてください。ラベルが文字の少ないロゴだけのデザインでも、日本酒の瓶なら含めてください。読めない項目は空文字か null にしてください。`;
+let mItems=[],mFile=null,mImg=null,mCtl=null,mBusy=false;
+const okBox=b=>b&&['x','y','w','h'].every(k=>b[k]!=null&&isFinite(+b[k]))&&+b.w>.02&&+b.h>.02;
+const clampBox=b=>{const c=v=>Math.max(0,Math.min(1,+v));const x=c(b.x),y=c(b.y);return{x,y,w:Math.min(c(b.w),1-x),h:Math.min(c(b.h),1-y)}};
+function drawBoxes(){
+  $('m-boxes').innerHTML=mItems.map((o,i)=>`<div class="mbox${o.on?'':' off'}" style="left:${o.box.x*100}%;top:${o.box.y*100}%;width:${o.box.w*100}%;height:${o.box.h*100}%"><b>${i+1}</b></div>`).join('');
+}
+async function cropItem(o){
+  const W=mImg.naturalWidth,H=mImg.naturalHeight,b=o.box,px=b.w*.08,py=b.h*.05;
+  const cx=Math.max(0,b.x-px),cy=Math.max(0,b.y-py),cw=Math.min(1-cx,b.w+2*px),ch=Math.min(1-cy,(b.y-cy)+b.h+b.h*.12);
+  o.crop={x:cx,y:cy,w:cw,h:ch};
+  const sx=cx*W,sy=cy*H,sw=cw*W,sh=ch*H,sc=Math.min(1,2160/Math.max(sw,sh)),c=document.createElement('canvas');
+  c.width=Math.max(1,Math.round(sw*sc));c.height=Math.max(1,Math.round(sh*sc));const x=c.getContext('2d');x.imageSmoothingQuality='high';
+  x.drawImage(mImg,sx,sy,sw,sh,0,0,c.width,c.height);
+  o.blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));o.src=URL.createObjectURL(o.blob);
+  o.lbox=null;if(o.label){const l=o.label,lx=(l.x-cx)/cw,ly=(l.y-cy)/ch,lw=l.w/cw,lh=l.h/ch;
+    const cb=clampBox({x:lx,y:ly,w:lw,h:lh});if(cb.w>.05&&cb.h>.05)o.lbox=cb}
+  try{const im=await loadImg(o.src);o.icon=labelIcon(im,o.lbox,1,192);o.prev=labelIcon(im,o.lbox,.75,192)}catch(e){o.icon='';o.prev=''}
+}
+function renderMulti(){
+  const opts=p=>'<option value="">—</option>'+PNAMES.map(x=>`<option${x===p?' selected':''}>${x}</option>`).join('');
+  const types=['','純米大吟醸','大吟醸','純米吟醸','吟醸','特別純米','純米','特別本醸造','本醸造','普通酒','スパークリング','クラフトサケ'];
+  $('m-list').innerHTML=mItems.map((o,i)=>`<div class="mitem${o.on?'':' off'}">
+    <span class="num">${i+1}<input type="checkbox" data-on="${i}" ${o.on?'checked':''} aria-label="${i+1}本目を記録する"></span>
+    <img src="${esc(o.prev||o.src||'')}" alt="${i+1}本目">
+    <div class="mf"><input data-i="${i}" data-k="name" value="${esc(o.name)}" placeholder="銘柄" aria-label="銘柄">
+      <div class="row"><input data-i="${i}" data-k="brewery" value="${esc(o.brewery)}" placeholder="酒蔵" aria-label="酒蔵">
+      <select data-i="${i}" data-k="pref" aria-label="都道府県">${opts(o.pref)}</select></div>
+      <select data-i="${i}" data-k="type" aria-label="特定名称">${types.map(t=>`<option${t===o.type?' selected':''}>${t}</option>`).join('')}</select></div></div>`).join('');
+  const k=mItems.filter(o=>o.on).length;$('m-save').disabled=!k||mBusy;$('m-save').textContent=k?`${k}本を記録する`:'記録する';
+  drawBoxes();
+}
+$('m-list').addEventListener('input',e=>{const t=e.target;if(t.dataset.k){mItems[+t.dataset.i][t.dataset.k]=t.value.trim()}});
+$('m-list').addEventListener('change',e=>{const t=e.target;if(t.dataset.on!=null){mItems[+t.dataset.on].on=t.checked;renderMulti()}});
+async function findBottles(){
+  const st=$('m-status');$('m-retry').hidden=true;
+  if(!sampleFn){st.className='ai-status err';st.textContent='この画面では写真の読み取りが使えません。';return}
+  mCtl=new AbortController();$('m-stop').hidden=false;st.className='ai-status dots';st.textContent='写っているお酒を探しています';
+  try{
+    let img=mFile;try{img=await hiBlob(mFile,2400)}catch(e){}
+    const r=await sampleFn.json(MPROMPT,{images:img,signal:mCtl.signal});
+    const arr=Array.isArray(r)?r:(r&&(r.bottles||r.items))||[];
+    const clamp2=x=>Math.max(-2,Math.min(2,Math.round(+x||0)));
+    mItems=arr.filter(o=>o&&okBox(o.box)).slice(0,12).map(o=>({box:clampBox(o.box),label:okBox(o.label)?clampBox(o.label):null,
+      name:String(o.name||o.label_text||'').trim().slice(0,40),brewery:String(o.brewery||'').trim(),pref:normPref(o.pref),
+      type:['純米大吟醸','大吟醸','純米吟醸','吟醸','特別純米','純米','特別本醸造','本醸造','普通酒','スパークリング','クラフトサケ'].includes(o.type)?o.type:'',
+      polish:o.polish!=null&&isFinite(+o.polish)?String(o.polish):'',smv:o.smv!=null&&isFinite(+o.smv)?String(o.smv):'',
+      official:String(o.description||'').trim().slice(0,400),dry:o.dry!=null?clamp2(o.dry):0,body:o.body!=null?clamp2(o.body):0,on:true}));
+    if(!mItems.length){st.className='ai-status err';st.textContent='日本酒の瓶が見つかりませんでした。ラベルが見えるように撮り直すか、1本ずつ登録してください。';$('m-retry').hidden=false;renderMulti();return}
+    for(const o of mItems)await cropItem(o);
+    renderMulti();
+    const weak=mItems.filter(o=>!o.name).slice(0,6);
+    for(const [i,o] of weak.entries()){
+      st.textContent=`読めなかった瓶を拡大して読み直しています（${i+1}/${weak.length}）`;
+      try{const zs=await zoomCrops(o.blob,null);const r=await sampleFn.json(ZPROMPT,{images:[...zs,o.blob].slice(0,Math.max(1,sampleMax)),signal:mCtl.signal});
+        if(r&&(r.name||r.label_text)){o.name=String(r.name||r.label_text).trim().slice(0,40);if(!o.brewery)o.brewery=String(r.brewery||'').trim();if(!o.pref)o.pref=normPref(r.pref);
+          if(!o.type&&TYPES.includes(r.type))o.type=r.type;if(!o.polish&&r.polish!=null&&isFinite(+r.polish))o.polish=String(r.polish);
+          if(!o.smv&&r.smv!=null&&isFinite(+r.smv))o.smv=String(r.smv);renderMulti()}}
+      catch(e){if(e&&e.code==='cancelled')throw e}
+    }
+    st.className='ai-status ok';st.textContent=`${mItems.length}本見つかりました。切り抜きと内容を確認して、記録しない瓶はチェックを外してください。`;
+  }catch(e){const c=e&&e.code;st.className='ai-status'+(c==='cancelled'?'':' err');
+    st.textContent=c==='cancelled'?'探すのを止めました。':c==='not_granted'||c==='sampling_disabled'?'読み取りが許可されていないため使えません。':c==='rate_limited'?'今は混み合っています。少し待ってからもう一度お試しください。':'うまく読み取れませんでした。もう一度お試しください。';
+    $('m-retry').hidden=c==='not_granted'||c==='sampling_disabled'}
+  finally{mCtl=null;$('m-stop').hidden=true}
+}
+async function openMulti(f){
+  mFile=f;mItems=[];mBusy=false;$('m-list').innerHTML='';$('m-boxes').innerHTML='';$('m-save').disabled=true;$('m-save').textContent='記録する';
+  $('multi').hidden=false;const url=URL.createObjectURL(f);$('m-img').src=url;
+  try{mImg=await loadImg(url)}catch(e){$('m-status').className='ai-status err';$('m-status').textContent='この写真は開けませんでした。';return}
+  findBottles();
+}
+$('multi-btn').onclick=()=>$('file-multi').click();
+$('file-multi').onchange=e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)openMulti(f)};
+$('m-stop').onclick=()=>mCtl&&mCtl.abort();
+$('m-retry').onclick=findBottles;
+const closeMulti=()=>{if(mBusy)return;mCtl&&mCtl.abort();$('multi').hidden=true};
+$('m-close').onclick=closeMulti;
+$('multi').addEventListener('click',e=>{if(e.target.id==='multi')closeMulti()});
+$('m-save').onclick=async()=>{
+  const list=mItems.filter(o=>o.on);if(!list.length||mBusy)return;
+  mBusy=true;$('m-save').disabled=true;const btn=$('m-save');let done=0,fail=0;
+  try{
+    let shared=null;
+    if($('m-keep').checked){btn.textContent='元の写真を保存中…';
+      if(assetsFn){try{const up=await assetsFn.upload(await hiBlob(mFile,1800));shared={id:up.id,url:up.url,shared:true}}catch(e){}}
+      if(!shared){try{shared={thumb:await thumbFrom(mFile,420)}}catch(e){}}}
+    const stamp=Date.now().toString(36);
+    for(const [i,o] of list.entries()){
+      btn.textContent=`記録中… ${i+1}/${list.length}`;
+      const n={id:'n'+stamp+'m'+i+Math.random().toString(36).slice(2,5),name:o.name||`まとめ登録 ${i+1}本目`,brewery:o.brewery,pref:o.pref,type:o.type,
+        polish:o.polish,smv:o.smv,dry:o.dry,body:o.body,rate:0,likes:[],aroma:[],temp:'',food:'',memo:'',official:o.official||'',officialSrc:o.official?'label':'',date:today(),created:new Date().toISOString(),
+        photo:'',photoId:'',photoUrl:'',label:o.lbox,focus:null,bgSvg:'',icon:o.icon||'',extras:shared?[shared]:[]};
+      try{n.photo=await thumbFrom(o.blob);
+        if(assetsFn){try{const up=await assetsFn.upload(o.blob);n.photoId=up.id;n.photoUrl=up.url}catch(e){}}
+        await store.save(n);done++}catch(e){fail++}
+    }
+    mBusy=false;$('multi').hidden=true;
+    toast(fail?`${done}本を記録しました（${fail}本は保存できませんでした）`:`${done}本を記録しました`);
+  }finally{mBusy=false;renderMulti()}
+};
+
+/* ---- zoomed re-read for labels the first pass could not read (e.g. labels low on the bottle) ---- */
+const TYPES=['純米大吟醸','大吟醸','純米吟醸','吟醸','特別純米','純米','特別本醸造','本醸造','普通酒','スパークリング','クラフトサケ'];
+const ZPROMPT='最初の画像はラベル付近を拡大したもので、残りは同じ瓶の写真です。ラベルは瓶の下の方・首・縦長の帯にあるデザインや、縦書き・筆文字のこともあります。拡大画像の文字を丁寧に読んでください。\n'+PROMPT;
+function padBox(b,p){const x=Math.max(0,b.x-b.w*p),y=Math.max(0,b.y-b.h*p);return{x,y,w:Math.min(1-x,b.w*(1+2*p)),h:Math.min(1-y,b.h*(1+2*p))}}
+function cropToBlob(im,b,max){const W=im.naturalWidth,H=im.naturalHeight,sw=b.w*W,sh=b.h*H,sc=Math.min(2,max/Math.max(sw,sh)),c=document.createElement('canvas');
+  c.width=Math.max(1,Math.round(sw*sc));c.height=Math.max(1,Math.round(sh*sc));const x=c.getContext('2d');x.imageSmoothingQuality='high';
+  x.drawImage(im,b.x*W,b.y*H,sw,sh,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.9))}
+async function zoomCrops(file,lb){
+  const url=URL.createObjectURL(file);try{const im=await loadImg(url);
+    const boxes=okBox(lb)?[padBox(clampBox(lb),.2)]:[{x:0,y:.42,w:1,h:.58},{x:0,y:0,w:1,h:.55}];
+    const out=[];for(const b of boxes)out.push(await cropToBlob(im,b,1600));return out}
+  finally{URL.revokeObjectURL(url)}
+}
+async function rereadZoom(file,lb,signal){
+  const z=await zoomCrops(file,lb);
+  return sampleFn.json(ZPROMPT,{images:[...z,file].slice(0,Math.max(1,sampleMax)),signal});
+}
+
+/* ---- small label-centered thumbnail for lists ---- */
+function labelIcon(im,box,aspect=1,outW=192){
+  const W=im.naturalWidth,H=im.naturalHeight;let cx=W/2,cy=H/2,cw,ch;
+  const full=Math.min(W,H*aspect);
+  if(box){cx=(box.x+box.w/2)*W;cy=(box.y+box.h/2)*H;cw=Math.max(box.w*W*1.25,box.h*H*1.25*aspect,full*.45)}else cw=full;
+  ch=cw/aspect;const f=Math.min(1,W/cw,H/ch);cw*=f;ch*=f;
+  const sx=Math.max(0,Math.min(W-cw,cx-cw/2)),sy=Math.max(0,Math.min(H-ch,cy-ch/2));
+  const c=document.createElement('canvas');c.width=outW;c.height=Math.round(outW/aspect);const x=c.getContext('2d');x.imageSmoothingQuality='high';
+  x.drawImage(im,sx,sy,cw,ch,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.8);
+}
+
+/* ---- type a name or brewery -> fill brewery, prefecture, type ---- */
+let lookupKey='',lookupCtl=null;
+function fillDatalists(){
+  const names=[...new Set(notes.map(n=>n.name).filter(Boolean))].slice(0,300),brs=[...new Set(notes.map(n=>n.brewery).filter(Boolean))].slice(0,300);
+  $('dl-name').innerHTML=names.map(v=>`<option value="${esc(v)}">`).join('');$('dl-brewery').innerHTML=brs.map(v=>`<option value="${esc(v)}">`).join('');
+}
+function lookupMsg(t,cls){const e=$('lookup-status');e.hidden=!t;e.className='ai-status'+(cls?' '+cls:'');e.textContent=t||''}
+function fillIfEmpty(id,v){if(v&&!$(id).value){$(id).value=v;return true}return false}
+function typeFromName(name){const t=[...TYPES].sort((a,b)=>b.length-a.length).find(t=>name.includes(t));return t||''}
+async function lookupFromInputs(src){
+  const name=$('f-name').value.trim(),br=$('f-brewery').value.trim();
+  if(!name&&!br)return;
+  const filled=[];
+  if(name&&fillIfEmpty('f-type',typeFromName(name)))filled.push('特定名称');
+  // 1) your own past records
+  const same=name&&notes.find(n=>n.id!==editing?.id&&n.name===name);
+  if(same){if(fillIfEmpty('f-brewery',same.brewery))filled.push('酒蔵');if(fillIfEmpty('f-pref',same.pref))filled.push('県');if(fillIfEmpty('f-type',same.type))filled.push('特定名称')}
+  const b2=$('f-brewery').value.trim(),sameB=b2&&notes.find(n=>n.id!==editing?.id&&n.brewery===b2&&n.pref);
+  if(sameB&&fillIfEmpty('f-pref',sameB.pref))filled.push('県');
+  if($('f-brewery').value&&$('f-pref').value){if(filled.length)lookupMsg('過去の記録から'+[...new Set(filled)].join('・')+'を入れました','ok');return}
+  // 2) ask Claude
+  if(!sampleFn||aiCtl)return;
+  const key=name+'|'+$('f-brewery').value.trim();if(key===lookupKey)return;lookupKey=key;
+  lookupCtl&&lookupCtl.abort();lookupCtl=new AbortController();const my=lookupCtl;
+  lookupMsg('酒蔵と都道府県を調べています','dots');
+  const b=$('f-brewery').value.trim();
+  const prompt=`日本酒について、次の入力から酒蔵と所在地を答えてください。
+入力：${name?`銘柄「${name}」`:''}${b?` 酒蔵「${b}」`:''}
+次のJSONだけで返してください：{"brewery":"酒造会社の名前（例：〇〇酒造、〇〇酒造店）","pref":"酒蔵の所在都道府県（「新潟」のように都府県を付けない。北海道はそのまま）","type":"銘柄名に特定名称（純米大吟醸/大吟醸/純米吟醸/吟醸/特別純米/純米/特別本醸造/本醸造/普通酒/スパークリング/クラフトサケ）が含まれていればそれ、なければ空文字","known":true/false（この銘柄や酒蔵を実際に知っていて自信があるか）}
+知らない、または候補が複数あって決められない場合は known を false にし、推測で埋めないでください。`;
+  try{
+    const r=await sampleFn.json(prompt,{signal:my.signal});
+    if(my!==lookupCtl)return;
+    if(!r||r.known===false){lookupMsg(filled.length?'過去の記録から'+[...new Set(filled)].join('・')+'を入れました':'酒蔵が見つかりませんでした。手で入力してください','');return}
+    if(fillIfEmpty('f-brewery',String(r.brewery||'').trim()))filled.push('酒蔵');
+    if(fillIfEmpty('f-pref',normPref(r.pref)))filled.push('県');
+    if(TYPES.includes(r.type)&&fillIfEmpty('f-type',r.type))filled.push('特定名称');
+    lookupMsg(filled.length?[...new Set(filled)].join('・')+'を入れました（違っていたら直してください）':'','ok');
+  }catch(e){if(my!==lookupCtl)return;const c=e&&e.code;
+    lookupMsg(c==='cancelled'?'':c==='not_granted'||c==='sampling_disabled'?'自動入力が許可されていないため使えません':c==='rate_limited'?'今は混み合っています。少しあとで入力し直してください':'うまく調べられませんでした','')}
+}
+$('f-name').addEventListener('change',()=>lookupFromInputs('name'));
+$('f-brewery').addEventListener('change',()=>lookupFromInputs('brewery'));
+
+/* ---- product description / tasting notes ---- */
+let officialSrc='',offCtl=null;
+const srcLabel=s=>s==='other'?'ほかのAIの答えより。公式情報と違うことがあります':s==='label'?'ラベルの記載より':s==='ai'?'Claudeの知識による紹介です。公式情報と違うことがあります':s==='brand'?'この商品ではなく、酒蔵・ブランド全体の特徴です（Claudeの知識より）':'';
+function offMsg(t,cls){const e=$('off-status');e.className='ai-status'+(cls?' '+cls:'');e.textContent=t||''}
+$('f-official').addEventListener('input',()=>{if(officialSrc!=='self'){officialSrc='self';offMsg('','')}});
+$('off-find').onclick=async()=>{
+  const name=$('f-name').value.trim();if(!name){offMsg('先に銘柄を入れてください','err');return}
+  if(!sampleFn){offMsg('この画面では調べられません','err');return}
+  offCtl&&offCtl.abort();offCtl=new AbortController();const my=offCtl;$('off-find').disabled=true;offMsg('紹介文を調べています（少し時間がかかります）','dots');
+  const prompt=`日本酒「${name}」${$('f-brewery').value.trim()?`（${$('f-brewery').value.trim()}${$('f-pref').value?'・'+prefFull($('f-pref').value):''}）`:''}${$('f-type').value?` ${$('f-type').value}`:''}について、紹介文を書いてください。
+次のJSONだけで返してください：{"level":"product"か"brand"か"none","text":"紹介文"}
+・この商品そのものを知っている → level "product"。香り・味わい・後味・おすすめの温度帯や料理などを2〜3文で（200字以内）。
+・この商品は知らないが、ブランドや酒蔵の造りの特徴を知っている → level "brand"。その蔵・ブランドの酒質の傾向を2〜3文で。
+・銘柄も酒蔵も分からない → level "none"、text は空文字。
+完全に確実でなくても、知っている情報があれば product か brand で答えてください。でたらめな作り話はしないでください。`;
+  try{const r=await sampleFn.json(prompt,{signal:my.signal,modelTier:'complex'});if(my!==offCtl)return;
+    const lv=r&&r.level;
+    if(!r||!r.text||lv==='none'){offMsg('この銘柄も酒蔵も分かりませんでした。裏ラベルを撮って追加するか、公式サイトの文章を貼り付けてください','');return}
+    officialSrc=lv==='brand'?'brand':'ai';$('f-official').value=String(r.text).trim().slice(0,400);offMsg(srcLabel(officialSrc),'')}
+  catch(e){if(my!==offCtl)return;const c=e&&e.code;offMsg(c==='cancelled'?'':c==='rate_limited'?'今は混み合っています。少しあとでお試しください':'うまく調べられませんでした','err')}
+  finally{if(my===offCtl)$('off-find').disabled=false}
+};
+
+/* ---- bridge to other AIs: copy a prompt, paste the answer back ---- */
+const EXT_PROMPT=`添付した日本酒のラベル写真（裏ラベルがあればそれも）を読み取って、次の形式のJSONだけで答えてください。説明文は不要です。
+{"name":"銘柄名（ラベルの商品名。特定できなければラベルに大きく書かれた文字）","brewery":"酒蔵の名前","pref":"酒蔵の都道府県（例：新潟。都府県は付けない）","type":"純米大吟醸/大吟醸/純米吟醸/吟醸/特別純米/純米/特別本醸造/本醸造/普通酒/スパークリング/クラフトサケ のどれか。不明なら空","polish":精米歩合の数字（不明なら null）,"smv":日本酒度の数字（不明なら null）,"dry":-2から2の整数（-2が甘口、2が辛口）,"body":-2から2の整数（-2が淡麗、2が濃醇）,"description":"裏ラベルの紹介文。なければその銘柄について知っている特徴を2〜3文。分からなければ空"}`;
+$('br-prompt').value=EXT_PROMPT;
+$('br-copy').onclick=async()=>{
+  try{await navigator.clipboard.writeText(EXT_PROMPT);$('br-status').className='ai-status ok';$('br-status').textContent='質問文をコピーしました';$('br-prompt').hidden=true}
+  catch(e){$('br-prompt').hidden=false;$('br-prompt').focus();$('br-prompt').select();$('br-status').className='ai-status';$('br-status').textContent='下の質問文を選択したので、コピーしてください'}
+};
+function parseAnswer(t){
+  t=String(t||'').trim();if(!t)return null;
+  const fence=t.match(/```(?:json)?\s*([\s\S]*?)```/i);let body=fence?fence[1]:t;
+  const a=body.indexOf('{'),b=body.lastIndexOf('}');
+  if(a>=0&&b>a){try{return JSON.parse(body.slice(a,b+1))}catch(e){
+    try{return JSON.parse(body.slice(a,b+1).replace(/[“”]/g,'"').replace(/,\s*}/g,'}'))}catch(e2){}}}
+  // plain "key: value" lines
+  const map={name:/^(銘柄|銘柄名|name)/i,brewery:/^(酒蔵|蔵元|酒造|brewery)/i,pref:/^(都道府県|県|所在地|pref)/i,type:/^(特定名称|種類|type)/i,
+    polish:/^(精米歩合|polish)/i,smv:/^(日本酒度|smv)/i,description:/^(紹介|説明|特徴|description)/i};
+  const o={};t.split(/\n/).forEach(l=>{const m=l.replace(/^[\s\-・*#]+/,'').match(/^([^:：]+)[:：]\s*(.+)$/);if(!m)return;
+    for(const [k,re] of Object.entries(map))if(re.test(m[1].trim())&&!o[k]){o[k]=m[2].trim().replace(/^["「]|["」]$/g,'');break}});
+  return Object.keys(o).length?o:null;
+}
+$('br-apply').onclick=()=>{
+  const r=parseAnswer($('br-paste').value),st=$('br-status');
+  if(!r||typeof r!=='object'){st.className='ai-status err';st.textContent='答えを読み取れませんでした。AIの答えを全部コピーして貼り付けてください';return}
+  const put=(id,v)=>{if(v!=null&&String(v).trim()!==''&&String(v)!=='null'){$(id).value=String(v).trim();return true}return false};
+  const done=[];
+  if(put('f-name',r.name))done.push('銘柄');if(put('f-brewery',r.brewery))done.push('酒蔵');
+  const p=normPref(r.pref);if(p){$('f-pref').value=p;done.push('県')}
+  const ty=String(r.type||'').trim();if(TYPES.includes(ty)){$('f-type').value=ty;done.push('特定名称')}
+  const num=v=>v!=null&&v!==''&&isFinite(parseFloat(String(v).replace(/[^\d.+-]/g,'')))?String(parseFloat(String(v).replace(/[^\d.+-]/g,''))):'';
+  if(put('f-polish',num(r.polish)))done.push('精米歩合');if(put('f-smv',num(r.smv)))done.push('日本酒度');
+  const c=x=>Math.max(-2,Math.min(2,Math.round(+x||0)));
+  if(r.dry!=null&&isFinite(+r.dry)){$('f-dry').value=c(r.dry);$('taste-hint').textContent='（AIの推定。飲んだ感想で動かしてください）'}
+  if(r.body!=null&&isFinite(+r.body))$('f-body').value=c(r.body);
+  if(r.description&&String(r.description).trim()){$('f-official').value=String(r.description).trim().slice(0,400);officialSrc='other';offMsg(srcLabel('other'),'');done.push('紹介文')}
+  st.className='ai-status ok';st.textContent=done.length?done.join('・')+'を入れました。内容を確認して保存してください':'入れられる項目がありませんでした';
+};
+
+/* ---- each person keeps a private notebook; the owner sees everyone's in "みんな" ---- */
+async function registerMember(){
+  if(!dbRef||!myId)return;
+  try{const ref=dbRef.doc('members/'+myId);const g=await ref.get();if(!g.exists)await ref.set({joined:new Date().toISOString()});memberOk=true}catch(e){}
+}
+async function loadAll(){
+  if(!dbRef)return;allLoaded=true;
+  const st=$('all-status');st.className='note';st.textContent='読み込んでいます…';
+  try{
+    const ms=await dbRef.collection('members').get();
+    const ids=[...new Set([myId,...ms.docs.map(d=>d.id)].filter(Boolean))];
+    try{const im=await dbRef.collection('imported').get();im.docs.forEach(d=>{const k='imp:'+d.id;impNames[k]=(d.data().name||'友達')+'（ファイル）';ids.push(k)})}catch(e){}
+    allData=[];
+    for(const id of ids){try{const path=id.startsWith('imp:')?'imported/'+id.slice(4)+'/notes':'data/users/'+id;
+      const q=await dbRef.collection(path).limit(1000).get();q.docs.forEach(d=>allData.push({...d.data(),id:d.id,owner:id}))}catch(e){}}
+    await renderAll(ids);
+    st.textContent=`最終更新 ${new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}`;
+  }catch(e){st.textContent='読み込めませんでした。少し待ってから「読み込み直す」を押してください。'}
+}
+async function renderAll(ids){
+  const real=ids.filter(id=>!id.startsWith('imp:'));
+  const ps=userRef&&real.length?await userRef.profiles(real):{};
+  const nameOf=(id,i)=>id===myId?'あなた':impNames[id]||(ps[id]&&ps[id].name)||`参加者${i+1}`;
+  const label={};ids.forEach((id,i)=>label[id]=nameOf(id,i));
+  const by={};allData.forEach(n=>(by[n.owner]=by[n.owner]||[]).push(n));
+  const prefs={};allData.forEach(n=>{if(n.pref)prefs[n.pref]=(prefs[n.pref]||0)+1});
+  const people=ids.filter(id=>by[id]&&by[id].length);
+  $('all-sum').textContent=`${people.length}人・合計${allData.length}本・${Object.keys(prefs).length}都道府県`;
+  // people
+  $('all-people').innerHTML='';
+  ids.forEach(id=>{const arr=(by[id]||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));const li=document.createElement('li');
+    const img=document.createElement('img');img.alt='';img.src=(ps[id]&&ps[id].avatarUrl)||'';if(!img.src)img.style.visibility='hidden';
+    const mid=document.createElement('span');mid.textContent=label[id];const sm=document.createElement('small');sm.textContent=arr[0]?'最近：'+arr[0].name:'まだ記録がありません';mid.append(sm);
+    const b=document.createElement('b');b.textContent=arr.length+'本';li.append(img,mid,b);$('all-people').append(li)});
+  // brands
+  const brands={};allData.forEach(n=>{const k=(n.name||'').trim();if(!k)return;const o=brands[k]=brands[k]||{c:0,r:0,rn:0,who:new Set()};o.c++;o.who.add(n.owner);if(n.rate){o.r+=n.rate;o.rn++}});
+  const top=Object.entries(brands).sort((a,b)=>b[1].who.size-a[1].who.size||b[1].c-a[1].c).slice(0,10),mx=top[0]?.[1].c||1;
+  $('all-brands').innerHTML=top.length?top.map(([k,o])=>`<li><span style="overflow-wrap:anywhere">${esc(k)}</span><span class="bar" style="width:${o.c/mx*100}%"></span><b>${o.c}本</b></li><li style="display:block;margin:-4px 0 4px;color:var(--muted);font-size:.75rem">${o.who.size}人が記録${o.rn?`・平均★${(o.r/o.rn).toFixed(1)}`:''}</li>`).join('')
+    :'<li style="display:block;color:var(--muted)">まだ記録がありません。</li>';
+  // japan
+  const T=30,G=33;let sv='';
+  PREFS.forEach(([p,x,y])=>{const c=prefs[p]||0,X=x*G+1.5,Y=y*G+1.5,fill=c>=3?cssv('--ai'):c>=1?cssv('--ai-mid'):cssv('--line'),fg=c>=3?cssv('--paper'):cssv('--ink');
+    sv+=`<g><title>${p} ${c}本</title><rect x="${X}" y="${Y}" width="${T}" height="${T}" rx="4" fill="${fill}"/><text x="${X+T/2}" y="${Y+12}" text-anchor="middle" font-size="9.5" fill="${fg}" font-family="${cssv('--f-body')}">${p.length>2?p.slice(0,2):p}</text>${c?`<text x="${X+T/2}" y="${Y+25}" text-anchor="middle" font-size="11" font-weight="700" fill="${fg}" font-family="${cssv('--f-num')}">${c}</text>`:''}</g>`});
+  $('all-japan').innerHTML=sv;
+  const tp=Object.entries(prefs).sort((a,b)=>b[1]-a[1]).slice(0,5),pm=tp[0]?.[1]||1;
+  $('all-prefs').innerHTML=tp.map(([p,c])=>`<li><span>${p}</span><span class="bar" style="width:${c/pm*100}%"></span><b>${c}本</b></li>`).join('');
+  // filter + recent list
+  const sel=$('all-who'),cur=sel.value;sel.innerHTML='<option value="">全員</option>'+people.map(id=>`<option value="${esc(id)}">${esc(label[id])}</option>`).join('');sel.value=people.includes(cur)?cur:'';
+  allLabels=label;renderAllList();
+}
+let allLabels={},impNames={};
+function renderAllList(){
+  const who=$('all-who').value;
+  const arr=allData.filter(n=>!who||n.owner===who).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.created||'').localeCompare(a.created||'')).slice(0,60);
+  $('all-list').innerHTML=arr.length?arr.map(n=>`<div class="card ro">
+    <span class="tw">${n.photo?`<img class="thumb" src="${esc(n.icon||n.photo)}" alt="">`:'<span class="thumb none" aria-hidden="true"></span>'}</span>
+    <span class="txt"><span class="who">${esc(allLabels[n.owner]||'')}</span><span class="top"><span class="nm">${esc(n.name)}</span><span class="stars">${stars(n.rate)}</span></span>
+    <span class="meta">${n.type?`<span class="chip">${esc(n.type)}</span>`:''}${n.brewery||n.pref?`<span>${esc(n.brewery)}${n.pref?'（'+esc(n.pref)+'）':''}</span>`:''}${n.date?`<span>${esc(n.date.replaceAll('-','.'))}</span>`:''}</span>
+    ${n.likes&&n.likes.length?`<span class="likes">好き：${esc(n.likes.join('・'))}</span>`:''}</span></div>`).join('')
+    :'<div class="empty">まだ記録がありません。</div>';
+}
+$('all-who').onchange=renderAllList;
+$('all-reload').onclick=loadAll;
+
+/* keep each record under the store's per-document size limit */
+async function fitDoc(n){
+  const size=()=>JSON.stringify(n).length;
+  if(size()<220000)return;
+  if(n.photo&&n.photo.startsWith('data:')){try{n.photo=await thumbFrom(dataUrlBlob(n.photo),560)}catch(e){}}
+  if(size()<220000)return;
+  for(const x of n.extras||[])if(x.thumb&&!x.url){try{x.thumb=await thumbFrom(dataUrlBlob(x.thumb),320)}catch(e){}}
+  if(size()<220000)return;
+  n.bgSvg='';
+}
+/* ---- promo images for announcing the app (with / without the group feature), built from your own records ---- */
+const promoAll=()=>((document.querySelector('[name=promo]:checked')||{}).value||'all')==='all';
+function promoLines(all){const L=['ラベルを撮るだけで、銘柄・酒蔵・県を読み取り','飲んだ県が日本地図で埋まっていく','味マップで自分の好みがわかる','SNS投稿用の画像もすぐ作れる'];
+  if(all)L.push('仲間の記録をまとめて、みんなのランキングに');return L}
+async function iconFor(n){
+  const im=await photoFor(n);if(!im)return null;
+  try{return await loadImg(labelIcon(im,boxFor(n),1,360))}catch(e){return im}
+}
+function drawTilesDark(x,ox,oy,step,cnt){const T=step-4;
+  PREFS.forEach(([p,gx,gy])=>{const c=cnt[p]||0,X=ox+gx*step,Y=oy+gy*step;rr(x,X,Y,T,T,Math.max(3,T*.15));
+    x.fillStyle=c>=2?'#ffffff':c===1?'rgba(143,163,214,.95)':'rgba(255,255,255,.14)';x.fill();
+    if(c){x.fillStyle=c>=2?K.ai:'#ffffff';x.textAlign='center';x.font=`700 ${Math.round(T*.5)}px ${FB}`;x.fillText(String(c),X+T/2,Y+T*.68);x.textAlign='left'}})}
+async function promoCard(fmt,all){
+  await fontsReady();
+  const story=fmt==='story',W=1080,H=story?1920:1350,M=64,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'#1d2f66');g.addColorStop(1,'#0b1124');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.save();x.globalAlpha=.10;janome(x,W-120,story?260:150,story?420:300);x.restore();
+  const WH='#ffffff',SUB='rgba(255,255,255,.8)';
+  // title
+  let y=story?250:130;janome(x,M+40,y-30,40);
+  x.font=`800 ${story?92:76}px ${FD}`;x.fillStyle=WH;x.fillText('蛇の目ノート',M+100,y);
+  y+=story?70:58;x.font=`500 ${story?40:32}px ${FB}`;x.fillStyle=SUB;x.fillText('撮って残す、日本酒の記録',M,y);
+  // recent bottles
+  const recent=[...notes].filter(n=>n.photo||n.photoUrl).sort((a,b)=>(b.rate||0)-(a.rate||0)||(b.date||'').localeCompare(a.date||'')).slice(0,3);
+  const sz=story?300:226,gap=story?24:20,px=(W-3*sz-2*gap)/2;y+=story?50:40;
+  for(let i=0;i<3;i++){const X=px+i*(sz+gap);x.save();x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=24;rr(x,X-8,y-8,sz+16,sz+16,22);x.fillStyle='#fff';x.fill();x.restore();
+    const n=recent[i],ic=n?await iconFor(n):null;
+    if(ic)drawPhoto(x,ic,X,y,sz,sz,14,{auto:false});else{rr(x,X,y,sz,sz,14);x.fillStyle=K.aiSoft;x.fill();janome(x,X+sz/2,y+sz/2,sz*.28)}
+    if(n){x.font=`700 ${story?26:22}px ${FB}`;x.fillStyle=SUB;x.textAlign='center';x.fillText(wrap(x,n.name,sz,1)[0],X+sz/2,y+sz+(story?48:40));x.textAlign='left'}}
+  y+=sz+(story?100:80);
+  // features (left) + map (right on post / below on story)
+  const step=34,fs=story?40:30,lh=story?74:56,colW=story?W-2*M:(W-M-12*step)-M-20,fy0=y;
+  promoLines(all).forEach((t,i)=>{const last=all&&i===4;x.beginPath();x.arc(M+10,y-fs*.35,9,0,Math.PI*2);x.fillStyle=last?'#f0c75e':K.shu;x.fill();
+    x.font=`${last?800:500} ${fs}px ${FB}`;x.fillStyle=last?'#f0c75e':WH;const ls=wrap(x,t,colW-40,2);ls.forEach((l,j)=>{x.fillText(l,M+36,y+j*fs*1.3)});y+=lh+(ls.length-1)*fs*1.3});
+  const cnt={};notes.forEach(n=>{if(n.pref)cnt[n.pref]=(cnt[n.pref]||0)+1});
+  const mx=story?M:W-M-12*step,my=story?y+20:fy0-fs-4;
+  drawTilesDark(x,mx,my,step,cnt);
+  const sx=story?mx+12*step+30:mx,sy=story?my+120:my+12*step+30;
+  x.font=`800 ${story?96:64}px ${FD}`;x.fillStyle=WH;x.fillText(String(notes.length),sx,sy);let w=x.measureText(String(notes.length)).width;
+  x.font=`700 ${story?34:26}px ${FB}`;x.fillText('本',sx+w+8,sy);
+  x.font=`500 ${story?30:24}px ${FB}`;x.fillStyle=SUB;x.fillText(`${Object.keys(cnt).length}都道府県を記録中`,sx,sy+(story?50:40));
+  if(story){x.fillText('（作者の記録）',sx,sy+96)}
+  // call to action + footer
+  const cy=story?1660:H-120;x.font=`800 ${story?44:34}px ${FD}`;x.fillStyle='#f0c75e';
+  x.fillText(all?'一緒に記録しませんか？参加はDMで':'日本酒好きのための記録ノート',M,cy);
+  x.font=`400 ${story?26:22}px ${FB}`;x.fillStyle=SUB;x.textAlign='right';x.fillText('Claudeで作ったアプリ',W-M,story?1740:H-44);x.textAlign='left';
+  return c;
+}
+function promoCaption(){
+  const all=promoAll(),cnt=new Set(notes.map(n=>n.pref).filter(Boolean)).size;
+  return ['日本酒の記録アプリ「蛇の目ノート」を作りました。','',
+    '・ラベルを撮るだけで銘柄・酒蔵・県を読み取り','・飲んだ県が日本地図で埋まっていく','・味マップで好みがわかる','・投稿用の画像もすぐ作れる',
+    ...(all?['・仲間の記録をまとめて、みんなのランキングに']:[]),'',
+    `今のところ${notes.length}本・${cnt}都道府県を記録中。`,
+    all?'一緒に記録してくれる人はDMください。リンクを送ります。':'',
+    '','#日本酒 #日本酒好き #日本酒記録 #蛇の目ノート #日本酒アプリ'].filter((l,i,a)=>!(l===''&&a[i-1]==='')).join('\n');
+}
+document.querySelectorAll('[name=promo]').forEach(r=>r.onchange=()=>{$('s-cap').value=promoCaption();drawShare()});
+$('promo-share').onclick=()=>openShare('promo');
+
+$('other-ai-btn').onclick=()=>{open(null);$('bridge').open=true;setTimeout(()=>$('bridge').scrollIntoView({block:'start',behavior:'smooth'}),60)};
+/* when Claude's AI isn't available to this viewer, make the other-AI flow the main path */
+function adaptUI(){
+  if(sampleFn)return;
+  document.body.classList.add('no-claude');
+  const b=$('shoot');b.innerHTML='<span class="cam" aria-hidden="true"></span>ChatGPTなどで読み取る';
+  b.onclick=()=>$('other-ai-btn').onclick();
+}
+/* owner: take in records that friends exported from the no-login version and sent by LINE etc. */
+$('imp-btn').onclick=()=>$('imp-file').click();
+$('imp-file').onchange=async e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f||!dbRef)return;
+  const st=$('imp-status');st.className='ai-status dots';st.textContent='取り込んでいます';
+  try{
+    const d=JSON.parse(await f.text());const arr=(Array.isArray(d)?d:d.notes||[]).filter(n=>n&&n.name);if(!arr.length)throw{msg:'記録が入っていないファイルです'};
+    const from=d.from||{},safe=v=>String(v||'').replace(/[^A-Za-z0-9_\-.~:@+]/g,'').slice(0,60);
+    const name=String(from.name||f.name.replace(/\.json$/i,'')||'友達').slice(0,40);
+    let key=safe(from.id);if(!key){let h=0;for(const ch of name)h=(h*31+ch.charCodeAt(0))|0;key='f'+Math.abs(h).toString(36)}
+    await dbRef.doc('imported/'+key).set({name,updatedAt:new Date().toISOString(),count:arr.length});
+    const col=dbRef.collection('imported/'+key+'/notes');let ok=0,skip=0;
+    for(const [i,n] of arr.entries()){st.textContent=`取り込んでいます ${i+1}/${arr.length}`;
+      const {id,owner,...body}=n;const did=safe(id)||('i'+i);
+      if(JSON.stringify(body).length>240000){body.photo='';body.icon=''}
+      try{await col.doc(did).set(body);ok++}catch(err){skip++}}
+    st.className='ai-status ok';st.textContent=`${name}さんの記録を${ok}件取り込みました`+(skip?`（${skip}件は取り込めませんでした）`:'');
+    loadAll();
+  }catch(err){st.className='ai-status err';st.textContent=err&&err.msg?err.msg:'このファイルは取り込めませんでした。「記録を書き出す」で作ったファイルか確認してください'}
+};
+
+/* standalone: files are saved with a normal download, and records can be backed up as a file */
+function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('保存しました')}
+function devId(){try{let v=localStorage.getItem('janome-dev');if(!v){v='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);localStorage.setItem('janome-dev',v)}return v}catch(e){return ''}}
+try{$('bk-name').value=localStorage.getItem('janome-nick')||''}catch(e){}
+$('bk-name').addEventListener('change',()=>{try{localStorage.setItem('janome-nick',$('bk-name').value.trim())}catch(e){}});
+$('bk-out').onclick=()=>{const nm=$('bk-name').value.trim();
+  saveBlob(new Blob([JSON.stringify({app:'janome-note',v:1,exported:new Date().toISOString(),from:{id:devId(),name:nm},notes})],{type:'application/json'}),`蛇の目ノート_${nm||'記録'}_${today()}.json`)};
+$('bk-in').onclick=()=>$('bk-file').click();
+$('bk-file').onchange=async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  try{const d=JSON.parse(await f.text());const arr=Array.isArray(d)?d:d.notes;if(!Array.isArray(arr))throw 0;
+    let add=0;arr.forEach(n=>{if(n&&n.id&&n.name&&!notes.some(x=>x.id===n.id)){notes.push(n);add++}});store.persist();toast(`${add}件を読み込みました`)}
+  catch(err){toast('このファイルは読み込めませんでした')}};
+render(); store.init().finally(adaptUI);
+</script>
+
+</body>
+</html>
