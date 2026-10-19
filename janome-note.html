@@ -73,7 +73,7 @@ h1{font-family:var(--f-disp);font-weight:800;font-size:1.6rem;margin:0;letter-sp
 .people small{display:block;color:var(--muted);font-size:.75rem;overflow-wrap:anywhere}
 .card.ro{cursor:default}
 .who{font-size:.72rem;font-weight:700;color:var(--muted)}
-.no-claude #pick,.no-claude #multi-btn,.no-claude #other-ai-btn,.no-claude #ai-read,.no-claude #split-btn,.no-claude #off-find,
+.no-claude #multi-btn,.no-claude #other-ai-btn,.no-claude #ai-read,.no-claude #split-btn,.no-claude #off-find,
 .no-claude .seg label:has(input[name=layout][value=gen]){display:none!important}
 .bridge .tip{font-size:.78rem;color:var(--muted)}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
@@ -248,8 +248,9 @@ details[open] summary{margin-bottom:10px}
 
   <p id="mode" class="note"></p>
   <label style="max-width:260px">ニックネーム（記録を送るときに相手に表示されます）<input id="bk-name" placeholder="例：さけ太郎" maxlength="20"></label>
-  <p class="note">「記録を書き出す」でできたファイルをLINEなどで送ると、送り先の「みんなの記録」に入ります。</p>
+  <p class="note">「記録をLINEで送る」を押して送り先にLINEを選ぶと、相手の「みんなの記録」に取り込めます。</p>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" class="btn primary" id="bk-line" style="padding:8px 14px;font-size:.9rem">記録をLINEで送る</button>
     <button type="button" class="btn" id="bk-out" style="padding:6px 12px;font-size:.85rem">記録を書き出す（バックアップ）</button>
     <button type="button" class="btn" id="bk-in" style="padding:6px 12px;font-size:.85rem">書き出した記録を読み込む</button>
     <input type="file" id="bk-file" accept="application/json,.json" hidden>
@@ -271,13 +272,14 @@ details[open] summary{margin-bottom:10px}
         <summary>ChatGPTやGeminiなど、ほかのAIで読み取る</summary>
         <ol class="steps">
           <li><button type="button" class="btn" id="br-copy">質問文をコピー</button></li>
-          <li>ほかのAIのアプリを開き、質問文を貼り付けてラベルの写真と一緒に送る</li>
+          <li>ほかのAIのアプリを開き、質問文を貼り付けてラベルの写真と一緒に送る
+            <button type="button" class="btn primary" id="br-share" hidden>写真と質問文をまとめてAIアプリに送る</button></li>
           <li>返ってきた答えを全部コピーして、下に貼り付ける
             <textarea id="br-paste" rows="4" placeholder="ここにAIの答えを貼り付け"></textarea>
             <button type="button" class="btn primary" id="br-apply">反映する</button>
             <span class="ai-status" id="br-status"></span></li>
         </ol>
-        <p class="tip">記録に写真も残したいときは、上の「＋ 写真を追加」で同じ写真を選んでください。</p>
+        <p class="tip" id="br-tip">記録に写真も残したいときは、上の「＋ 写真を追加」で同じ写真を選んでください。</p>
         <textarea id="br-prompt" rows="3" readonly hidden aria-label="質問文"></textarea>
       </details>
     </div>
@@ -532,7 +534,8 @@ const PROMPT=`添付の画像は、同じ日本酒1本についての写真で�
 1枚目に日本酒の瓶が2本以上写っている場合は、いちばん手前・中央の1本について答えてください。奥の棚や冷蔵庫・ショーケースに並んでいる瓶は無視し、手前（カウンターやテーブルの上など）に置かれた瓶だけを対象にしてください。ラベルに県が書かれていなくても、蔵がわかるなら所在県を答えてください。わからない項目は空文字か null にしてください。`;
 async function readLabel(files){
   const st=$('ai-status');files=files.filter(Boolean);if(!files.length)return;
-  if(!sampleFn){st.className='ai-status';st.textContent='この画面ではラベルの自動読み取りが使えません。下の「ほかのAIで読み取る」を使うか、手で入力してください。';$('bridge').open=true;return}
+  if(!sampleFn){st.className='ai-status ok';st.textContent='写真を入れました。下の手順で、ChatGPTなどにラベルを読み取ってもらいましょう';$('bridge').open=true;updateShare();
+    setTimeout(()=>$('bridge').scrollIntoView({block:'start',behavior:'smooth'}),80);return}
   aiCtl=new AbortController(); $('ai-stop').hidden=false; $('ai-read').hidden=true;
   const use=files.slice(0,sampleMax);
   st.className='ai-status dots'; st.textContent=use.length>1?`${use.length}枚の写真を読んでいます`:'ラベルを読んでいます';
@@ -570,10 +573,17 @@ async function readLabel(files){
     if(code==='not_granted'||code==='sampling_disabled'||code==='images_unavailable'){sampleFn=null;adaptUI();$('bridge').open=true}
   }finally{$('ai-stop').hidden=true;aiCtl=null;updateAiRead()}
 }
+function updateShare(){
+  const f=shots.find(p=>p.file)?.file;let ok=false;
+  try{ok=!sampleFn&&!!f&&!!navigator.canShare&&navigator.canShare({files:[f]})}catch(e){}
+  $('br-share').hidden=!ok;
+  $('br-tip').hidden=!!f;
+}
 function renderShots(){
   $('shots').hidden=!shots.length;
   $('shots').innerHTML=shots.map((p,i)=>`<div class="shot${i?'':' main'}"><img src="${esc(shotSrc(p))}" alt="写真${i+1}"${shotPos(p)}>${i?'':'<span class="badge">メイン</span>'}
     <button type="button" class="x" data-del="${i}" aria-label="写真${i+1}を外す">×</button>${i?`<button type="button" class="mk" data-main="${i}">メインにする</button>`:''}</div>`).join('');
+  updateShare();
   $('add-photos').textContent=shots.length?'＋ 写真を追加（裏ラベル・料理など）':'＋ 写真を追加（複数まとめて選べます）';
   updateAiRead();
 }
@@ -884,7 +894,7 @@ $('s-save').onclick=async()=>{
   if(!shareCanvas)return;
   const blob=await new Promise(r=>shareCanvas.toBlob(r,'image/jpeg',.95));
   const base=shareTarget==='summary'?'日本酒まとめ':shareTarget==='promo'?'蛇の目ノート紹介':hashName(shareTarget.name)||'日本酒';
-  if(!dlFn){saveBlob(blob,base+'.jpg');return}
+  if(!dlFn){shareOrSave(blob,base+'.jpg','蛇の目ノート');return}
   try{await dlFn.save({filename:base+'.jpg',data:blob});toast('保存しました')}
   catch(e){const c=e&&e.code;if(c==='declined')return;
     if(c==='rate_limited'){toast('少し待ってからもう一度押してください');return}
@@ -1398,8 +1408,7 @@ $('other-ai-btn').onclick=()=>{open(null);$('bridge').open=true;setTimeout(()=>$
 function adaptUI(){
   if(sampleFn)return;
   document.body.classList.add('no-claude');
-  const b=$('shoot');b.innerHTML='<span class="cam" aria-hidden="true"></span>ChatGPTなどで読み取る';
-  b.onclick=()=>$('other-ai-btn').onclick();
+  updateShare();
 }
 /* owner: take in records that friends exported from the no-login version and sent by LINE etc. */
 $('imp-btn').onclick=()=>$('imp-file').click();
@@ -1422,12 +1431,32 @@ $('imp-file').onchange=async e=>{
   }catch(err){st.className='ai-status err';st.textContent=err&&err.msg?err.msg:'このファイルは取り込めませんでした。「記録を書き出す」で作ったファイルか確認してください'}
 };
 
+$('br-share').onclick=async()=>{
+  const files=shots.filter(p=>p.file).map(p=>p.file).slice(0,4);if(!files.length)return;
+  try{await navigator.clipboard.writeText(EXT_PROMPT)}catch(e){}
+  try{await navigator.share({files,text:EXT_PROMPT});$('br-status').className='ai-status ok';$('br-status').textContent='AIの答えをコピーして、下に貼り付けてください'}
+  catch(e){if(e&&e.name==='AbortError')return;$('br-status').className='ai-status';$('br-status').textContent='まとめて送れませんでした。質問文をコピーして、写真と一緒に送ってください'}
+};
 /* standalone: files are saved with a normal download, and records can be backed up as a file */
 function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('保存しました')}
 function devId(){try{let v=localStorage.getItem('janome-dev');if(!v){v='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);localStorage.setItem('janome-dev',v)}return v}catch(e){return ''}}
 try{$('bk-name').value=localStorage.getItem('janome-nick')||''}catch(e){}
 $('bk-name').addEventListener('change',()=>{try{localStorage.setItem('janome-nick',$('bk-name').value.trim())}catch(e){}});
+function exportBlob(){const nm=$('bk-name').value.trim();
+  return {blob:new Blob([JSON.stringify({app:'janome-note',v:1,exported:new Date().toISOString(),from:{id:devId(),name:nm},notes})],{type:'application/json'}),name:`蛇の目ノート_${nm||'記録'}_${today()}.json`}}
+async function shareOrSave(blob,name,text){
+  try{const f=new File([blob],name,{type:blob.type||'application/octet-stream'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name,text});return true}}
+  catch(e){if(e&&e.name==='AbortError')return false}
+  saveBlob(blob,name);return false}
+$('bk-line').onclick=async()=>{
+  if(!$('bk-name').value.trim()){toast('先にニックネームを入れてください');$('bk-name').focus();return}
+  if(!notes.length){toast('まだ記録がありません');return}
+  const {blob,name}=exportBlob();
+  const shared=await shareOrSave(blob,name,'蛇の目ノートの記録です。みんなの記録に取り込んでください');
+  if(!shared)toast('ファイルを保存しました。LINEのトークで「＋」→「ファイル」から送ってください');
+};
 $('bk-out').onclick=()=>{const nm=$('bk-name').value.trim();
   saveBlob(new Blob([JSON.stringify({app:'janome-note',v:1,exported:new Date().toISOString(),from:{id:devId(),name:nm},notes})],{type:'application/json'}),`蛇の目ノート_${nm||'記録'}_${today()}.json`)};
 $('bk-in').onclick=()=>$('bk-file').click();
